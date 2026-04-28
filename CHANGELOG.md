@@ -7,6 +7,96 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-04-28
+
+Two rule-audit passes folded into one release: a user-feedback pass on
+three high-noise rules (raised by a real `npx agelin check` run on a
+ported VS Code agent), and a wider audit run against the full
+97-agent calibration corpus (4 popular community repos: VoltAgent,
+0xfurai, lst97, iannuttall) to surface false positives at scale.
+
+### Fixed — user-feedback rule rework
+- **`unknown-tool`** — pre-0.2.2 emitted one issue per unknown tool with
+  the full 17-name canonical list pasted into every message. An agent
+  imported from another ecosystem (Cline, Cursor, Copilot Workspace)
+  could fire 20+ near-identical issues, filling the screen with
+  duplicate text. The rule now emits a single coalesced issue per
+  agent: a count, up to 8 names, an overflow indicator, and a `docUrl`
+  pointing at Anthropic's [sub-agents docs][subagents-docs] instead of
+  pasting the canonical list. Same detection, dramatically less noise.
+- **`frontmatter-name-mismatch`** — pre-0.2.2 was an `error`-severity
+  exact-string match. It rejected slug-equivalent shapes
+  (`Expert React Engineer` vs `expert-react-engineer.md`) and choked on
+  multi-extension filenames (`foo.agent.md`). Three changes:
+  - Comparison is now slug-based (lowercase + non-alphanumeric → `-`),
+    so capitalisation and word-separator differences no longer fire.
+  - Multi-extension suffixes like `.agent.md` are stripped before
+    comparison.
+  - Severity downgraded to `suggestion`. Claude Code dispatches by the
+    frontmatter `name` field, not the filename — a mismatch is a
+    consistency smell, not a runtime bug. The pre-0.2.2 framing
+    overstated the constraint.
+- **`role-play-bloat`** — dropped the dated 2023 arxiv `docUrl`. The
+  underlying observation (persona prefixes don't reliably help and
+  always cost attention) is now broad enough not to need a single
+  citation, and quoting an MMLU paper as the authority on agentic
+  workflows was overstating the empirical case. Message softened from
+  "wastes tokens / does not improve task accuracy" to "do not reliably
+  benefit from persona prefixes". Detection unchanged.
+
+### Improved — wild-corpus audit
+- **`tool-body-mismatch` for Read** — fired 27 times across the corpus
+  (28% of agents). The audit traced this to `Read`'s `IMPLICIT_USAGE`
+  table missing common synonyms — wild agents say "analyze the source
+  files" / "review the code" / "check the file" for what is clearly
+  reading work. Added `analyze`, `review`, `parse`, `study`, `scan`,
+  `check`, and `source files`/`source code` to Read's table.
+  Wild-corpus fires for Read dropped to **2** (-25). Glob / LS / Task
+  were checked in the same audit and left alone — those wild fires are
+  genuinely over-declaration ("declared Glob, never described scanning
+  files"), which is what the rule should catch.
+- **Friendlier YAML parse-error message.** 14 of 97 wild agents fail
+  YAML parsing, ~all because of unquoted `<example>` tags inside an
+  unquoted `description:` field (the angle bracket is interpreted as a
+  YAML flow indicator). The parser previously surfaced the raw library
+  error ("incomplete explicit mapping pair; a key node is missed; or
+  followed by a non-tabulated empty line at line 3, column 320: ...")
+  which is technically accurate and totally opaque. The parser now
+  detects the pattern and emits an actionable message naming the
+  cause and offering two concrete fixes: quote the description, or
+  use a YAML block scalar (`description: >-`).
+- **Cascading "missing name" error suppressed when YAML fails.** Pre-0.2.2
+  a YAML parse failure produced TWO issues per agent: the primary YAML
+  error + "frontmatter: missing or non-string `name`" because no `data`
+  was extracted. The author can't fix the missing name without first
+  fixing the YAML — the cascade was redundant. Across the wild corpus,
+  parse-error issues went 14 → 7 with no loss of signal.
+
+### Added
+- New per-rule unit tests for `unknown-tool` (7), `frontmatter-name-mismatch`
+  (8), `role-play-bloat` (8), expanded `tool-body-mismatch` coverage (5
+  new cases for the Read synonyms), `parse-error-explainer.test.ts`, and
+  `parse-error-cascade.test.ts`. These rules previously had no dedicated
+  tests; behaviour was only covered indirectly via fixtures.
+
+### Corpus-wide impact (97 agents, 0.2.1 → 0.2.2)
+- Total issues: **811 → 779** (-32)
+- Mean score: **62.6 → 64.9** (+2.3, false-positive removal)
+- Median score: 66 → 66 (unchanged — the typical agent didn't have
+  these specific bugs)
+
+### Known issue (not blocking)
+gray-matter's underlying YAML parser carries state across failed parses
+within a single process — after one unclosed flow mapping throws,
+subsequent malformed inputs silently return empty data instead of
+re-throwing. Doesn't affect production behaviour (each `agelin check`
+invocation is one process), but means the cascade-suppression test
+lives in its own file (`tests/parse-error-cascade.test.ts`) so it gets
+a fresh state. Worth migrating off gray-matter to a stricter YAML
+library in a future release.
+
+[subagents-docs]: https://docs.claude.com/en/docs/claude-code/sub-agents
+
 ## [0.2.1] — 2026-04-28
 
 ### Added

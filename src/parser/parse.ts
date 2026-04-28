@@ -17,6 +17,39 @@ function estimateTokens(text: string): number {
 }
 
 /**
+ * Turn a raw YAML parse error into a message that explains what likely
+ * went wrong AND points at a concrete fix. The wild-corpus scan in 0.2.2
+ * showed 14/97 agents fail YAML parsing, and ~all of them hit the
+ * same root cause: an unquoted `description:` field that contains
+ * `<example>` tags. The YAML parser sees the angle brackets as flow-style
+ * mapping syntax and bails. The Anthropic-style template encourages this
+ * pattern via "Examples: <example>...</example>" inline.
+ */
+function explainYamlError(raw: string, err: unknown): string {
+  const reason = err instanceof Error ? err.message : String(err);
+  const frontmatterEnd = raw.indexOf("\n---", 4);
+  const frontmatter = frontmatterEnd > 0 ? raw.slice(0, frontmatterEnd) : raw;
+
+  // Unquoted `<example>` (or other unescaped angle brackets) anywhere
+  // in the frontmatter is the dominant failure mode in the wild corpus.
+  // Match permissively: the tag may appear inline on the description
+  // line OR on a later continuation line. False-positive risk is low
+  // because we only enter this branch after the YAML parser already
+  // rejected the input.
+  if (/<example\b|<\/example>/i.test(frontmatter)) {
+    return (
+      "frontmatter YAML failed to parse — the `description:` field contains an `<example>` tag (or other angle brackets) without quoting. " +
+      'Wrap the description in quotes: `description: "Use when … <example>…</example>"`, or use a YAML block scalar (`description: >-` then indent the next lines). ' +
+      `Underlying parser error: ${reason}`
+    );
+  }
+
+  // Generic fallback — keep the original message visible since the
+  // structured-line/column hint is genuinely useful for debugging.
+  return `malformed YAML frontmatter: ${reason}`;
+}
+
+/**
  * Coerce gray-matter's `data` into a SubagentFrontmatter shape.
  * We never throw — anything missing/malformed becomes a parseError so the
  * rule layer can flag it (e.g. frontmatter-description-missing).
@@ -24,11 +57,18 @@ function estimateTokens(text: string): number {
 function normalizeFrontmatter(
   data: Record<string, unknown>,
   parseErrors: string[],
+  yamlFailed: boolean,
 ): SubagentFrontmatter {
   const fm: SubagentFrontmatter = {
     name: typeof data.name === "string" ? data.name : "",
     description: typeof data.description === "string" ? data.description : "",
   };
+
+  // Skip cascading errors when YAML parsing already failed: there's no
+  // useful `data` to validate, and the missing-name / bad-tools messages
+  // would just stack on top of the real issue. The single YAML error
+  // already pushed by the caller is more actionable on its own.
+  if (yamlFailed) return fm;
 
   if (!fm.name) parseErrors.push("frontmatter: missing or non-string `name`");
 
@@ -79,18 +119,22 @@ export function parseSubagent(filePath: string): ParsedSubagent {
 
   let data: Record<string, unknown> = {};
   let body = "";
+  let yamlFailed = false;
   try {
     const parsed = matter(raw);
     data = (parsed.data ?? {}) as Record<string, unknown>;
     body = parsed.content ?? "";
   } catch (err) {
-    parseErrors.push(
-      `malformed YAML frontmatter: ${err instanceof Error ? err.message : String(err)}`,
-    );
+    yamlFailed = true;
+    parseErrors.push(explainYamlError(raw, err));
     body = raw;
   }
 
-  const frontmatter = normalizeFrontmatter(data, parseErrors);
+  // Suppress cascading "missing name / tools / etc" errors when the YAML
+  // itself didn't parse — those secondary errors are inevitable
+  // consequences of the primary failure and only add noise. The author
+  // can't fix the missing `name` without first fixing the YAML.
+  const frontmatter = normalizeFrontmatter(data, parseErrors, yamlFailed);
 
   return {
     path: absPath,

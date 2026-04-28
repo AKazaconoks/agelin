@@ -69,4 +69,53 @@ describe("tool-body-mismatch", () => {
     });
     expect(rule.check(sa)).toEqual([]);
   });
+
+  // 0.2.2 — Read's IMPLICIT_USAGE was expanded after the wild-corpus
+  // audit. These verbs all imply reading/inspection in real subagent
+  // bodies and should now suppress the false positive.
+  test("Read accepts 'analyze' as an implicit-usage verb (0.2.2)", () => {
+    const sa = mkSubagent({
+      frontmatter: { name: "t", description: "t", tools: ["Read"] },
+      body: "When invoked, analyze the supplied source files and report findings.",
+    });
+    expect(rule.check(sa)).toEqual([]);
+  });
+
+  test("Read accepts 'review' as implicit-usage", () => {
+    const sa = mkSubagent({
+      frontmatter: { name: "t", description: "t", tools: ["Read"] },
+      body: "You review the user's pull request and surface any issues.",
+    });
+    expect(rule.check(sa)).toEqual([]);
+  });
+
+  test("Read accepts 'check' / 'parse' / 'study' / 'scan'", () => {
+    for (const verb of ["check", "parse", "study", "scan"]) {
+      const sa = mkSubagent({
+        frontmatter: { name: "t", description: "t", tools: ["Read"] },
+        body: `When invoked, ${verb} the user's submitted file.`,
+      });
+      expect(rule.check(sa)).toEqual([]);
+    }
+  });
+
+  test("Read accepts 'source files' phrasing", () => {
+    const sa = mkSubagent({
+      frontmatter: { name: "t", description: "t", tools: ["Read"] },
+      body: "Inspect the project's source files and produce a report.",
+    });
+    expect(rule.check(sa)).toEqual([]);
+  });
+
+  test("Glob still fires when nothing implies file-listing (audit confirmed legit signal)", () => {
+    // The corpus audit showed Glob's implicit-usage table is correctly
+    // narrow — 60/97 wild agents over-declare it. Don't loosen.
+    const sa = mkSubagent({
+      frontmatter: { name: "t", description: "t", tools: ["Glob"] },
+      body: "Read the supplied file and produce a one-paragraph summary.",
+    });
+    const issues = rule.check(sa);
+    expect(issues.length).toBe(1);
+    expect(issues[0]!.message).toContain("Glob");
+  });
 });

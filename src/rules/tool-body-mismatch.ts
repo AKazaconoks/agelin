@@ -19,9 +19,33 @@ import { getToolList, isMcpTool, CANONICAL_TOOLS } from "../parser/tools.js";
  */
 
 /** Verbs whose presence implies the tool is used, even if the tool's
- * literal name is absent. Lowercase, whole-word matched against prose. */
+ * literal name is absent. Lowercase, whole-word matched against prose.
+ *
+ * 0.2.2 — expanded `Read` after the wild-corpus audit: "Read"-flagged
+ * agents commonly use `analyze` / `review` / `check` / `parse` for what
+ * is clearly reading work. Pre-expansion the rule fired 27/97 times for
+ * Read, often on agents that legitimately read files but didn't
+ * literally say "read". Glob / LS / Task were checked in the same
+ * audit and left alone — those wild fires are genuinely
+ * over-declaration ("I declared Glob but never described scanning
+ * files"), which is what the rule should catch. */
 const IMPLICIT_USAGE: Record<string, RegExp[]> = {
-  Read: [/\bread\b/, /\bload\b/, /\bopen\b/, /\bview\b/, /\binspect\b/, /\bexamine\b/, /\bcontents? of\b/],
+  Read: [
+    /\bread\b/,
+    /\bload\b/,
+    /\bopen\b/,
+    /\bview\b/,
+    /\binspect\b/,
+    /\bexamine\b/,
+    /\bcontents? of\b/,
+    /\banaly[sz]e\b/,
+    /\breview\b/,
+    /\bparse\b/,
+    /\bstudy\b/,
+    /\bscan\b/,
+    /\bcheck\b/,
+    /\bsource\s+(?:files?|code)\b/,
+  ],
   Write: [/\bwrite\b/, /\bcreate\b/, /\bgenerate\b/, /\bproduce\b/, /\bsave\b/, /\bemit\b/, /\boutput a file\b/],
   Edit: [/\bedit\b/, /\bmodify\b/, /\bupdate\b/, /\bchange\b/, /\bapply\b/, /\bfix\b/, /\brefactor\b/, /\brewrite\b/, /\breplace\b/],
   MultiEdit: [/\bedit\b/, /\bmodify\b/, /\bbatch\b/, /\bmulti[- ]edit\b/, /\brefactor\b/, /\brewrite\b/],
