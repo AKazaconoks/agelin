@@ -36,6 +36,13 @@ export interface CheckOptions {
    * JSON / markdown formats are unaffected.
    */
   quiet?: boolean;
+  /**
+   * When true, force the verbose console layout (full message + fix per
+   * issue). When false, force the compact summary. When undefined, the
+   * console reporter picks: verbose for single-agent runs, summary
+   * otherwise. JSON / markdown formats are unaffected.
+   */
+  verbose?: boolean;
 }
 
 const TOOL_VERSION = "0.0.1";
@@ -104,6 +111,7 @@ export async function runCheck(opts: CheckOptions): Promise<void> {
     results: renderResults,
     generatedAt: new Date().toISOString(),
     toolVersion: TOOL_VERSION,
+    verbose: opts.verbose,
   };
 
   const output = reporter.render(ctx);

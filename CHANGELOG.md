@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-04-28
+
+### Added
+- **Verbose console output** for `agelin check`. Each issue now renders
+  with its full message, fix-it hint, and line number — not just the
+  rule id. The verbose layout auto-engages when checking a single
+  agent (the natural "I'm inspecting this one" shape); pass
+  `--verbose` to force it on multi-agent runs.
+- **Bottom-of-summary hint** points at `agelin fix` when at least one
+  auto-fixable issue was found, and at `--verbose` when issues exist
+  in summary mode. Helps users discover next-step actions.
+- The summary now shows a `+N more` suffix when an agent has more
+  than two firing rules, instead of silently truncating.
+
+### Fixed
+- The totals row was misleading: it printed `agentsWithIssues` under
+  the label "issues", so a 1-agent run with 8 issues read as
+  "1 agents checked, 1 issues, 2 critical". Now reads as
+  "1 agent checked, 8 issues across 1 agent (2 critical)".
+
 ## [0.2.0] — 2026-04-28
 
 ### Added

@@ -165,6 +165,16 @@ export interface ReportContext {
   results: AgentScore[];
   generatedAt: string;
   toolVersion: string;
+  /**
+   * Hint for the console reporter: render the verbose per-issue layout
+   * (message + fix + line). Tri-state:
+   *   - `true`  — force verbose
+   *   - `false` — force summary
+   *   - `undefined` — auto: verbose iff exactly one agent
+   *
+   * Other reporters (json, markdown, html) ignore this field.
+   */
+  verbose?: boolean;
 }
 
 export interface Reporter {

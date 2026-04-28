@@ -43,6 +43,8 @@ Options:
   --repeats <n>      Override config.benchRepeats
   --fail-on <sev>    Exit non-zero on: error|warning|suggestion|none (check default: error)
   --quiet            Hide clean agents from console output  (check only)
+  --verbose          Show full message + fix per issue       (check only;
+                       auto-on for single-agent runs)
   --output <path>    bench: write report to file directly (avoids stdout buffer issues)
   --score <n>        Score 0-100 (badge)
   --agent <name>     Agent name (badge)
@@ -69,7 +71,7 @@ async function main() {
   }
 
   if (command === "--version" || command === "-v") {
-    console.log("0.2.0");
+    console.log("0.2.1");
     process.exit(0);
   }
 
@@ -96,6 +98,7 @@ async function main() {
       template: { type: "string" },
       output: { type: "string" },
       "dry-run": { type: "boolean", default: false },
+      verbose: { type: "boolean", default: false },
     },
     allowPositionals: true,
   });
@@ -117,6 +120,9 @@ async function main() {
         configPath: values.config,
         failOn,
         quiet: values.quiet === true,
+        // `--verbose` forces the per-issue layout; otherwise the
+        // reporter auto-picks (verbose for single-agent runs).
+        verbose: values.verbose === true ? true : undefined,
       });
       break;
     case "bench":

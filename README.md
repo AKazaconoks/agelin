@@ -66,21 +66,39 @@ All 34 rules with severities, descriptions, and example fix-it messages: [`docs/
 
 ## Sample output
 
+Multi-agent scan — compact summary:
+
 ```
-$ npx agelin check ./fixtures/subagents/
+$ npx agelin check ./.claude/agents/
 ⚠ build-validator           Score: 90  (undefined-output-shape, missing-input-preconditions)
-⚠ code-block-no-lang-positive  Score: 86  (no-negative-constraints, tool-body-mismatch)
-✗ code-fixer                Score: 23  (no-exit-criteria, no-negative-constraints)
-✗ postgres-admin            Score: 35  (cost-bomb, role-play-bloat)
-⚠ research-agent            Score: 96  (missing-input-preconditions, code-block-no-language)
-✗ role-contradiction-positive  Score: 29  (tool-overreach, no-exit-criteria)
-✗ security-auditor          Score: 29  (tool-overreach, vague-pronouns)
-...
+⚠ code-block-no-lang-positive  Score: 86  (no-negative-constraints, tool-body-mismatch, +3 more)
+✗ code-fixer                Score: 23  (no-exit-criteria, no-negative-constraints, +4 more)
+✗ security-auditor          Score: 29  (tool-overreach, vague-pronouns, +2 more)
 
-29 agents checked, 29 issues, 4 critical
+4 agents checked, 18 issues across 4 agents (2 critical)
+
+  Some issues are auto-fixable. Run `agelin fix <path>` to apply, or `agelin fix <path> --dry-run` to preview.
+  Run with --verbose to see the message and fix for each issue.
 ```
 
-Each agent is scored 0–100 by subtracting weighted penalties from a clean baseline (errors -25, warnings -8, suggestions -2). The console reporter shows the top two firing rules per agent; full per-rule output is available with `--format=json`.
+Single-agent scan — auto-verbose layout (also via `--verbose`):
+
+```
+$ npx agelin check ./.claude/agents/security-auditor.md
+✗ security-auditor  Score: 29
+
+  [error]     tool-overreach
+    description claims read-only review but tools include Edit, Bash.
+    fix: Remove Edit/Bash from `tools`, or update the description to say it can apply fixes.
+
+  [warning]   vague-pronouns
+    body uses hand-wavy phrases like "the appropriate tool" without specifying which one.
+    fix: Replace each vague pronoun with the concrete tool/file/argument the agent should use.
+
+1 agent checked, 2 issues across 1 agent (1 critical)
+```
+
+Each agent is scored 0–100 by subtracting weighted penalties from a clean baseline (errors -25, warnings -8, suggestions -2). Full per-rule output is available with `--format=json` for piping into other tools.
 
 ## Documentation
 
