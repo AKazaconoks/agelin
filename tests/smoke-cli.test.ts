@@ -120,8 +120,16 @@ describe("CLI smoke tests", () => {
     expect(code).toBe(0);
   });
 
-  test("fix dry-run runs cleanly on a no-fix fixture", () => {
-    const { code } = runCli(["fix", "fixtures/subagents/research-agent.md"]);
+  test("fix --dry-run runs cleanly on a fixture without writing", () => {
+    // Use --dry-run explicitly: `fix` defaults to in-place writes since
+    // 0.1.0, and this test must not mutate a checked-in fixture.
+    // research-agent.md does have one auto-fixable rule
+    // (`code-block-no-language`) — exit code is still 0 either way.
+    const { code } = runCli([
+      "fix",
+      "fixtures/subagents/research-agent.md",
+      "--dry-run",
+    ]);
     expect(code).toBe(0);
   });
 

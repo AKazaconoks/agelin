@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-04-28
+
+### Added
+- **Auto-fix breadth.** `agelin fix` now handles four rules instead of
+  one: `tools-as-string-not-array`, `code-block-no-language` (inserts
+  `text` lang tag), `malformed-list` (renumbers 1..N preserving indent
+  and marker), and `hardcoded-paths` (replaces user-home paths with
+  `~/`, skipping placeholders and code blocks). Detection logic is
+  carefully aligned with each rule's `check()` so a fix never lands
+  on something the rule wouldn't flag.
+- **Config presets.** `extends: "agelin:recommended"` (default) and
+  `extends: "agelin:strict"` (bumps each active rule up one notch:
+  suggestion → warning, warning → error). Compose multiple presets
+  via an array; user `rules` always win last.
+- **Plugin loader.** Custom rules via `plugins: ["./my-rules.js"]` in
+  config. Plugin module default-exports `{ name, rules }`; rule ids
+  are auto-namespaced as `<plugin-name>/<rule-id>`. Plugin rules
+  participate in everything (presets, severity overrides, suppressions).
+- **Inline disable comments.** ESLint-style suppressions in agent
+  bodies:
+  - `<!-- agelin-disable-next-line rule-id -->`
+  - `<!-- agelin-disable rule-a, rule-b -->` … `<!-- agelin-enable -->`
+  - `<!-- agelin-disable -->` (file-wide) … `<!-- agelin-enable -->`
+
+  Whole-agent rules (those that emit issues without a line number) are
+  suppressed by any block disable that names them, regardless of where
+  in the file the directive lives. `disable-next-line` is single-line
+  and never silences a whole-agent rule.
+- **Programmatic API: rule list, suppressions.** `lint()` already
+  exported; the new `runRulesOnAgent`, `collectSuppressions`,
+  `isSuppressed`, `loadPlugins`, and `applyExtends` are part of the
+  semver-stable surface for embedders.
+
+### Changed
+- The three CLI commands (`check`, `bench`, `baseline`) and the
+  programmatic `lint()` now share a single rule-runner module
+  (`src/lint-runner.ts`). Behavior is identical; the consolidation was
+  a prerequisite for adding suppressions in one place.
+- `agelin fix [path]` (no flag) writes in place by default — this was
+  the 0.1.0 behaviour but the help text and README now reflect it
+  consistently. `--dry-run` previews.
+
+### Tests
+- 246 passing (up from 207 at 0.1.0). New suites:
+  `presets.test.ts` (9), `plugins.test.ts` (10),
+  `suppressions.test.ts` (18), and four new fixer cases in
+  `cli-fix.test.ts`.
+
+## [0.1.0] — 2026-04-28 — initial public release
+
+Published to npm as `agelin@0.1.0`. See README for the feature list.
+
+## [Pre-0.1.0]
+
 ### Added
 - `agelin fix [path]` — auto-correct safe rule violations.
   Default mode is dry-run; pass `--write` to apply. v1 supports

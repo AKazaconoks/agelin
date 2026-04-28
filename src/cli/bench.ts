@@ -34,10 +34,10 @@
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { loadConfig } from "../config.js";
+import { loadConfigWithPlugins } from "../config.js";
+import { runRulesOnAgent } from "../lint-runner.js";
 import { saveLastRun } from "../persistence.js";
 import { getReporter } from "../reporters/index.js";
-import { ALL_RULES } from "../rules/index.js";
 import { parseSubagentDir } from "../parser/parse.js";
 import { runBenchmark } from "../eval/runner.js";
 import { pickBackend, type BackendId } from "../eval/backends/index.js";
@@ -156,52 +156,6 @@ const TOOL_VERSION = "0.0.1";
 const TASKS_DIR = "tasks";
 const DEFAULT_CATEGORIES: TaskCategory[] = ["code-review", "research", "debug"];
 
-function effectiveSeverity(rule: Rule, config: SubagentLintConfig): Severity | "off" {
-  const override = config.rules?.[rule.id];
-  if (override === undefined) return rule.defaultSeverity;
-  return override;
-}
-
-function applySeverityOverride(issue: Issue, override: Severity): Issue {
-  if (issue.severity === override) return issue;
-  return { ...issue, severity: override };
-}
-
-function runRulesOnAgent(
-  subagent: ParsedSubagent,
-  rules: Rule[],
-  config: SubagentLintConfig,
-): Issue[] {
-  const issues: Issue[] = [];
-  for (const rule of rules) {
-    const sev = effectiveSeverity(rule, config);
-    if (sev === "off") continue;
-    let ruleIssues: Issue[] = [];
-    try {
-      ruleIssues = rule.check(subagent);
-    } catch (err) {
-      ruleIssues = [
-        {
-          ruleId: rule.id,
-          severity: "warning",
-          message: `Rule ${rule.id} threw: ${err instanceof Error ? err.message : String(err)}`,
-        },
-      ];
-    }
-    for (const issue of ruleIssues) {
-      issues.push(applySeverityOverride(issue, sev));
-    }
-  }
-  for (const parseError of subagent.parseErrors) {
-    issues.push({
-      ruleId: "parse-error",
-      severity: "error",
-      message: parseError,
-    });
-  }
-  return issues;
-}
-
 /**
  * Load golden tasks from `tasks/<category>/*.json`. Each file is expected to
  * be a single GoldenTask object. Skips files that fail to parse rather than
@@ -258,7 +212,7 @@ export async function runBench(opts: BenchOptions): Promise<void> {
     );
   }
 
-  const config = loadConfig(opts.configPath);
+  const { config, rules } = await loadConfigWithPlugins(opts.configPath);
   const reporter = getReporter(opts.format);
 
   const subagents = await parseSubagentDir(opts.path);
@@ -266,7 +220,7 @@ export async function runBench(opts: BenchOptions): Promise<void> {
   // Static issues per agent, keyed by name (with path fallback)
   const staticIssuesByAgent = new Map<string, Issue[]>();
   for (const subagent of subagents) {
-    const issues = runRulesOnAgent(subagent, ALL_RULES, config);
+    const issues = runRulesOnAgent(subagent, rules, config);
     const key = subagent.frontmatter.name || subagent.path;
     staticIssuesByAgent.set(key, issues);
   }

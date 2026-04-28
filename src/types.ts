@@ -180,7 +180,25 @@ export interface SubagentLintConfig {
   /** glob patterns relative to cwd */
   include: string[];
   exclude?: string[];
-  /** override severities per rule id */
+  /**
+   * Preset(s) to extend from.
+   *   - "agelin:recommended" — every rule at its defaultSeverity (the implicit default)
+   *   - "agelin:strict"      — bumps each active rule up one notch
+   *
+   * Multiple presets compose left-to-right; the user's explicit `rules`
+   * field always wins last.
+   */
+  extends?: string | string[];
+  /**
+   * Plugin module specifiers to load. Each module must default-export
+   * `{ name: string, rules: Rule[] }`. Relative paths are resolved
+   * against the config file's directory; bare specifiers go through
+   * Node's package resolution.
+   *
+   * Plugin rule ids are namespaced as `<plugin.name>/<rule.id>`.
+   */
+  plugins?: string[];
+  /** override severities per rule id (wins over `extends`) */
   rules?: Record<string, Severity | "off">;
   /** which categories of golden tasks to run during bench */
   benchCategories?: TaskCategory[];

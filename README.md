@@ -96,6 +96,77 @@ Each agent is scored 0–100 by subtracting weighted penalties from a clean base
 
 The two are complementary — run cclint to make sure it's well-formed, run agelin to make sure it works.
 
+## Auto-fix
+
+Four rules have safe auto-fixes today:
+
+```bash
+npx agelin fix ./.claude/agents/            # writes in place
+npx agelin fix ./.claude/agents/ --dry-run  # preview without writing
+```
+
+| Rule                          | Fix                                               |
+|-------------------------------|---------------------------------------------------|
+| `tools-as-string-not-array`   | rewrite comma-string → YAML array                 |
+| `code-block-no-language`      | insert `text` lang tag on bare ``` fences         |
+| `malformed-list`              | renumber 1..N preserving indent + marker          |
+| `hardcoded-paths`             | replace `/home/<u>/`, `/Users/<u>/`, `C:\Users\<u>\` with `~/` (placeholder names and code blocks left alone) |
+
+A fix lands here only when there's exactly one reasonable answer. Rules that need a judgment call (e.g. `stale-model-versions` — `claude-3-opus` could map to either Sonnet 4.6 or Opus 4.7) print the suggestion in the message but don't auto-apply.
+
+## Configuration
+
+Drop an `agelin.config.json` in your repo root. Three composable layers:
+
+```json
+{
+  "extends": "agelin:strict",
+  "plugins": ["./internal-rules.js", "@my-org/agelin-rules"],
+  "rules": {
+    "no-examples": "off",
+    "my-org/no-internal-jargon": "error"
+  }
+}
+```
+
+**Presets (`extends`).** `agelin:recommended` is the implicit default — every rule at its `defaultSeverity`. `agelin:strict` bumps each rule up one notch (suggestion → warning, warning → error). Multiple presets compose left-to-right.
+
+**Plugins (`plugins`).** Module specifiers — relative paths or bare-package names. Each plugin default-exports `{ name, rules }`; rule ids get auto-namespaced as `<plugin-name>/<rule-id>` so two plugins (or a plugin and a built-in) can never collide. Plugin rules participate fully in `extends` and `rules`.
+
+```js
+// internal-rules.js
+export default {
+  name: "my-org",
+  rules: [
+    {
+      id: "no-internal-jargon",
+      defaultSeverity: "warning",
+      description: "Don't use internal jargon in subagent prompts.",
+      check(subagent) {
+        if ((subagent.body || "").match(/\bblerg\b/i)) {
+          return [{ ruleId: "no-internal-jargon", severity: "warning",
+                    message: "body uses internal jargon" }];
+        }
+        return [];
+      }
+    }
+  ]
+};
+```
+
+**Per-file overrides (inline directives).** Suppress a rule for a single line, a block, or the rest of the file:
+
+```md
+<!-- agelin-disable-next-line no-examples -->
+This agent intentionally has no examples.
+
+<!-- agelin-disable no-negative-constraints, prompt-too-short -->
+... permissive section ...
+<!-- agelin-enable -->
+```
+
+Whole-agent rules (those that emit issues without a line number) are suppressed by any block disable that names them.
+
 ## Programmatic API
 
 ```ts
@@ -111,7 +182,7 @@ Stable exports follow semver: `lint`, `parseSubagent`, `parseSubagentDir`, `ALL_
 
 ## Status
 
-0.1.0. The 34 static rules are calibrated against a 97-agent corpus; the benchmark harness is functional but the golden task suite is still expanding. Public API is semver-stable from this release; the `bench` surface is not yet exported programmatically and may change.
+0.2.0. The 34 static rules are calibrated against a 97-agent corpus; four of them have safe auto-fixes. The benchmark harness is functional but the golden task suite is still expanding. Public API (the named exports above) follows semver; the `bench` surface is not yet exported programmatically and may change.
 
 ## Contributing
 

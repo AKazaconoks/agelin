@@ -19,9 +19,9 @@
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { loadConfig } from "../config.js";
+import { loadConfigWithPlugins } from "../config.js";
+import { runRulesOnAgent } from "../lint-runner.js";
 import { parseSubagentDir } from "../parser/parse.js";
-import { ALL_RULES } from "../rules/index.js";
 import { runBenchmark } from "../eval/runner.js";
 import { computeAgentScore } from "../scoring/score.js";
 import {
@@ -88,7 +88,7 @@ export async function runBaseline(opts: BaselineOptions = {}): Promise<void> {
     process.exit(1);
   }
 
-  const config = loadConfig(opts.configPath);
+  const { config, rules } = await loadConfigWithPlugins(opts.configPath);
   const targetsDir = resolve(process.cwd(), opts.targetsDir ?? TARGETS_DEFAULT);
 
   if (!existsSync(targetsDir)) {
@@ -115,7 +115,7 @@ export async function runBaseline(opts: BaselineOptions = {}): Promise<void> {
   // Static issues per agent.
   const staticIssuesByAgent = new Map<string, Issue[]>();
   for (const sub of subagents) {
-    const issues = runRulesOnAgent(sub, ALL_RULES, config);
+    const issues = runRulesOnAgent(sub, rules, config);
     const key = sub.frontmatter.name || sub.path;
     staticIssuesByAgent.set(key, issues);
   }
@@ -191,52 +191,6 @@ export async function runBaseline(opts: BaselineOptions = {}): Promise<void> {
 
 // ---------------------------------------------------------------------------
 // Helpers
-
-function runRulesOnAgent(
-  subagent: ParsedSubagent,
-  rules: Rule[],
-  config: SubagentLintConfig,
-): Issue[] {
-  const issues: Issue[] = [];
-  for (const rule of rules) {
-    const sev = effectiveSeverity(rule, config);
-    if (sev === "off") continue;
-    let ruleIssues: Issue[] = [];
-    try {
-      ruleIssues = rule.check(subagent);
-    } catch (err) {
-      ruleIssues = [
-        {
-          ruleId: rule.id,
-          severity: "warning",
-          message: `Rule ${rule.id} threw: ${err instanceof Error ? err.message : String(err)}`,
-        },
-      ];
-    }
-    for (const issue of ruleIssues) {
-      issues.push(applySeverityOverride(issue, sev));
-    }
-  }
-  for (const parseError of subagent.parseErrors) {
-    issues.push({
-      ruleId: "parse-error",
-      severity: "error",
-      message: parseError,
-    });
-  }
-  return issues;
-}
-
-function effectiveSeverity(rule: Rule, config: SubagentLintConfig): Severity | "off" {
-  const override = config.rules?.[rule.id];
-  if (override === undefined) return rule.defaultSeverity;
-  return override;
-}
-
-function applySeverityOverride(issue: Issue, override: Severity): Issue {
-  if (issue.severity === override) return issue;
-  return { ...issue, severity: override };
-}
 
 function loadManifest(targetsDir: string): Manifest | null {
   const path = join(targetsDir, MANIFEST_FILE);
