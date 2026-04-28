@@ -1,29 +1,27 @@
 import type { Rule, Issue, ParsedSubagent } from "../types.js";
 
 /**
- * Hardcoded user-path detection.
+ * hardcoded-paths — prose contains user-specific filesystem paths like
+ * /home/alice/... or C:\Users\bob\.... These usually leak from local
+ * authoring and break for anyone else. Code blocks are exempt — example
+ * paths there are intentional. Excludes generic placeholders ("user").
  *
- * Agent prompts that reference a specific user's home directory
- * (`/home/alice/...`, `/Users/Bob/...`, `C:\Users\carol\...`) won't work
- * for any other user — they break portability the moment the agent runs in
- * a different environment. The fix is to use `~`, `$HOME`, `%USERPROFILE%`,
- * or a placeholder like `/home/<user>/`.
- *
- * Detection runs against PROSE only — code blocks legitimately contain
- * absolute example paths and we don't want to flag those. Until Unit 1
- * provides `ast.prose`, we strip fenced code blocks with a regex.
+ * Detection runs against PROSE only. Until Unit 1's `ast.prose` lands we
+ * strip fenced code blocks inline (` ``` ` and ` ~~~ `).
  *
  * Severity: `suggestion` — the prompt may still work as written, but
  * portability is materially better with a placeholder.
  */
 
 // TODO(integration): replace `stripCodeBlocks(body)` with `subagent.ast.prose`
-// once Unit 1's markdown tokenizer lands. We do NOT lowercase here because the
-// macOS pattern relies on the uppercase-first-letter convention.
+// once Unit 1's markdown tokenizer lands. We replace code-block contents with
+// newlines (rather than deleting them) so match offsets still map back to the
+// original line numbers in the unmodified body. We do NOT lowercase here —
+// the macOS pattern relies on the uppercase-first-letter convention.
 function stripCodeBlocks(body: string): string {
-  return body
-    .replace(/```[\s\S]*?```/g, "")
-    .replace(/~~~[\s\S]*?~~~/g, "");
+  return body.replace(/(```|~~~)[\s\S]*?\1/g, (block) =>
+    block.replace(/[^\n]/g, " "),
+  );
 }
 
 // Segments that signal a documentation placeholder rather than a real
@@ -82,13 +80,19 @@ const rule: Rule = {
         // placeholder check.
         if (segment.length > 0 && PLACEHOLDER_SEGMENTS.has(segment)) continue;
 
-        if (seen.has(match)) continue;
-        seen.add(match);
+        // Dedupe per (path, line) so the same path mentioned twice on the
+        // same line emits one issue, but multiple distinct lines still each
+        // get reported.
+        const line = body.slice(0, m.index).split("\n").length;
+        const key = `${match}@${line}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
 
         issues.push({
           ruleId: rule.id,
           severity: rule.defaultSeverity,
           message: `body references a hardcoded user path '${match}'. This will not work for other users.`,
+          line,
           fix: "Use `~`, `$HOME`, `%USERPROFILE%`, or a placeholder like `/home/<user>/` instead.",
         });
       }

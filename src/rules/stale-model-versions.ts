@@ -1,21 +1,19 @@
 import type { Rule, Issue, ParsedSubagent } from "../types.js";
 
 /**
- * Stale Claude model reference detection.
+ * stale-model-versions — frontmatter `model` or body references a
+ * deprecated/retired Claude model identifier. Curated list; update when
+ * Anthropic announces a deprecation. Last reviewed: 2026-04.
  *
- * Agent prompts that name retired or pre-Claude-4 model IDs ("claude-2",
- * "claude-3-opus", "claude-3-5-sonnet", etc.) become a curation hazard:
- * they may continue to dispatch traffic to deprecated endpoints, or worse,
- * confuse readers about which model the prompt was actually tuned for.
+ * Stale (as of last review): claude-2, claude-2.1, claude-instant
+ * (and dated/numbered variants like claude-instant-1, claude-instant-1.2),
+ * claude-3-opus, claude-3-sonnet, claude-3-haiku (and dated suffixes).
  *
- * MAINTENANCE NOTE — this list is curated by hand and MUST be reviewed
- * roughly every 6 months as Anthropic releases new model families. As of
- * 2026 the Claude 4 generation (sonnet-4-6, sonnet-4-7, opus-4-7, haiku-4-5)
- * is current; anything earlier is stale. When a Claude 5 family ships,
- * promote the Claude 4 entries that are no longer recommended into this list.
+ * NOT stale: claude-3-5-sonnet, claude-3-7-sonnet, claude-sonnet-4,
+ * claude-opus-4, and the broader Claude 4 family aliases.
  *
  * Detection covers:
- *   1. Frontmatter `model` field (matched against any pattern).
+ *   1. Frontmatter `model` field.
  *   2. Body PROSE (text outside fenced code blocks). Code blocks may
  *      legitimately contain historical model IDs in migration examples.
  *
@@ -24,28 +22,34 @@ import type { Rule, Issue, ParsedSubagent } from "../types.js";
  */
 
 // TODO(integration): swap `stripCodeBlocks(body)` for `subagent.ast.prose`
-// once Unit 1's markdown tokenizer lands.
+// once Unit 1's markdown tokenizer lands. We replace block contents with
+// spaces (preserving newlines) so match offsets still map to the original
+// body's line numbers.
 function stripCodeBlocks(body: string): string {
-  return body
-    .replace(/```[\s\S]*?```/g, "")
-    .replace(/~~~[\s\S]*?~~~/g, "");
+  return body.replace(/(```|~~~)[\s\S]*?\1/g, (block) =>
+    block.replace(/[^\n]/g, " "),
+  );
 }
 
+// Patterns are matched with `g` so we can iterate over every occurrence.
+// Word boundaries (`\b`) on either side prevent us from matching as a
+// substring of a longer, current alias (e.g. `claude-3-5-sonnet` must not
+// match the `claude-3` pattern). Order matters: longer / more-specific
+// patterns first to avoid double-counting.
 const STALE_MODEL_PATTERNS: RegExp[] = [
+  /\bclaude-3-opus(?:-\d{8})?\b/gi,
+  /\bclaude-3-sonnet(?:-\d{8})?\b/gi,
+  /\bclaude-3-haiku(?:-\d{8})?\b/gi,
+  /\bclaude-instant(?:-\d+(?:\.\d+)?)?\b/gi,
   /\bclaude-2(?:\.\d)?\b/gi,
-  /\bclaude-instant\b/gi,
-  /\bclaude-3-opus\b/gi,
-  /\bclaude-3-sonnet\b/gi,
-  /\bclaude-3-haiku\b/gi,
-  /\bclaude-3-5-sonnet\b/gi,
-  /\bclaude-3-5-haiku\b/gi,
 ];
 
-function buildIssue(match: string): Issue {
+function buildIssue(match: string, line?: number): Issue {
   return {
     ruleId: rule.id,
     severity: rule.defaultSeverity,
     message: `references stale Claude model '${match}'. Update to a current model alias (e.g., \`claude-sonnet-4-6\`, \`claude-haiku-4-5\`).`,
+    line,
     fix: "Replace with a current model alias. The Sonnet 4 family is the recommended default as of 2026.",
   };
 }
@@ -63,7 +67,7 @@ const rule: Rule = {
   id: "stale-model-versions",
   defaultSeverity: "suggestion",
   description:
-    "Frontmatter or body references a retired Claude model ID (claude-2, claude-3-opus, claude-3-5-sonnet, etc.). Update to a current alias.",
+    "Frontmatter or body references a retired Claude model ID (claude-2, claude-3-opus, claude-3-sonnet, etc.). Update to a current alias.",
   check(subagent: ParsedSubagent): Issue[] {
     const issues: Issue[] = [];
     const seen = new Set<string>();
@@ -74,15 +78,15 @@ const rule: Rule = {
     if (typeof modelField === "string" && modelField.length > 0) {
       const match = findFirstMatch(modelField);
       if (match) {
-        const key = match.toLowerCase();
-        seen.add(key);
+        seen.add(match.toLowerCase());
         issues.push(buildIssue(match));
       }
     }
 
     // 2. Body prose — every distinct stale id, deduped.
     if (subagent.body) {
-      const prose = stripCodeBlocks(subagent.body);
+      const body = subagent.body;
+      const prose = stripCodeBlocks(body);
       for (const re of STALE_MODEL_PATTERNS) {
         re.lastIndex = 0;
         let m: RegExpExecArray | null;
@@ -90,7 +94,8 @@ const rule: Rule = {
           const key = m[0].toLowerCase();
           if (seen.has(key)) continue;
           seen.add(key);
-          issues.push(buildIssue(m[0]));
+          const line = body.slice(0, m.index).split("\n").length;
+          issues.push(buildIssue(m[0], line));
         }
       }
     }

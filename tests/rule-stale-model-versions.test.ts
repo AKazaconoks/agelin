@@ -5,9 +5,10 @@
  *   1. Frontmatter `model` field — single match.
  *   2. Body PROSE (code blocks stripped) — every distinct stale id, deduped.
  *
- * Stale list (as of 2026): claude-2, claude-instant, claude-3-opus,
- * claude-3-sonnet, claude-3-haiku, claude-3-5-sonnet, claude-3-5-haiku.
- * Current Claude 4 family aliases must NOT fire.
+ * Stale list (last reviewed 2026-04): claude-2 / claude-2.1,
+ * claude-instant (and -1, -1.2 variants), claude-3-opus, claude-3-sonnet,
+ * claude-3-haiku (and dated -YYYYMMDD suffixes).
+ * NOT stale: claude-3-5-*, claude-3-7-*, Claude 4 family aliases.
  */
 
 import { describe, expect, test } from "bun:test";
@@ -41,17 +42,17 @@ describe("stale-model-versions", () => {
 
   test("fires when the body prose names a stale id", () => {
     const sa = mkSubagent({
-      body: "This prompt was originally tuned for claude-3-5-sonnet behaviour.",
+      body: "This prompt was originally tuned for claude-2.1 behaviour.",
     });
     const issues = rule.check(sa);
     expect(issues.length).toBe(1);
-    expect(issues[0].message).toContain("claude-3-5-sonnet");
+    expect(issues[0].message).toContain("claude-2.1");
   });
 
-  test("does not fire on current Claude 4 model aliases", () => {
+  test("does not fire on current Claude 3.5 / 3.7 / 4 model aliases", () => {
     const sa = mkSubagent({
       frontmatter: { name: "t", description: "t", model: "claude-sonnet-4-6" },
-      body: "Use claude-haiku-4-5 for cheap turns.",
+      body: "Use claude-haiku-4-5 for cheap turns. Fall back to claude-3-5-sonnet only if needed.",
     });
     expect(rule.check(sa)).toEqual([]);
   });

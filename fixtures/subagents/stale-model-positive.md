@@ -9,7 +9,7 @@ tools:
 When invoked, summarise the supplied paper in three paragraphs.
 
 Use claude-3-opus if the document is longer than 50 pages, otherwise the
-default model is fine. The prior baseline used claude-3-5-sonnet, which
+default model is fine. The original 2023 baseline used claude-2, which
 should no longer be referenced in new prompts.
 
 ## Output
