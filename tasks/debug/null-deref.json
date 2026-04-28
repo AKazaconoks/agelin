@@ -1,0 +1,41 @@
+{
+  "id": "null-deref",
+  "category": "debug",
+  "title": "Diagnose nullable email crash and propose a durable fix",
+  "prompt": "production stack trace. customer email column is nullable on purpose, can't migrate it. fix?\n\n```\nTraceback (most recent call last):\n  File \"/app/services/orders.py\", line 142, in finalize_order\n    receipt = build_receipt(order, order.customer.email)\n  File \"/app/services/orders.py\", line 87, in build_receipt\n    body = render_template(\"receipt.html\", customer_email=email.lower())\n```",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "\\bnone\\b", "flags": "i" },
+          { "kind": "regex", "pattern": "\\bnull\\b", "flags": "i" },
+          { "kind": "regex", "pattern": "missing\\s+email", "flags": "i" },
+          { "kind": "regex", "pattern": "nullable", "flags": "i" },
+          { "kind": "regex", "pattern": "NoneType", "flags": "" },
+          { "kind": "regex", "pattern": "Optional\\[", "flags": "" },
+          { "kind": "regex", "pattern": "AttributeError", "flags": "" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "\\bguard\\b", "flags": "i" },
+          { "kind": "regex", "pattern": "check\\s+(for|if)", "flags": "i" },
+          { "kind": "regex", "pattern": "before\\s+(call|use|access)", "flags": "i" },
+          { "kind": "regex", "pattern": "default\\s+(to|value)", "flags": "i" },
+          { "kind": "regex", "pattern": "fall\\s*back", "flags": "i" },
+          { "kind": "regex", "pattern": "skip\\s+the\\s+receipt", "flags": "i" },
+          { "kind": "regex", "pattern": "(if|when)\\s+email\\s+is", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": {
+    "maxTokens": 8000,
+    "maxCostUsd": 0.10,
+    "maxDurationSec": 90,
+    "maxToolCalls": 10
+  }
+}

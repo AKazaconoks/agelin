@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>agelin — quality scores for Claude Code subagents</title>
+    <meta
+      name="description"
+      content="ESLint + benchmark harness for Claude Code subagents. Tells you if the subagent actually works — not just if the YAML parses."
+    />
+    <style>
+      :root {
+        --fg: #0b0d10;
+        --fg-muted: #5b6470;
+        --fg-subtle: #8a93a0;
+        --bg: #ffffff;
+        --bg-soft: #f6f7f9;
+        --border: #e6e8ec;
+        --accent: #0a64f0;
+        --accent-soft: #eaf1ff;
+        --green: #1a7f37;
+        --green-bg: #dafbe1;
+        --yellow: #9a6700;
+        --yellow-bg: #fff8c5;
+        --red: #cf222e;
+        --red-bg: #ffebe9;
+        --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+          "Liberation Mono", monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: var(--sans);
+        color: var(--fg);
+        background: var(--bg);
+        font-size: 16px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .container {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      header.nav {
+        border-bottom: 1px solid var(--border);
+        padding: 18px 0;
+      }
+      .nav-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand {
+        font-family: var(--mono);
+        font-weight: 600;
+        font-size: 15px;
+        color: var(--fg);
+        letter-spacing: -0.01em;
+      }
+      .brand-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+      .nav-links {
+        display: flex;
+        gap: 22px;
+        font-size: 14px;
+        color: var(--fg-muted);
+      }
+      .nav-links a {
+        color: var(--fg-muted);
+      }
+      .nav-links a:hover {
+        color: var(--fg);
+        text-decoration: none;
+      }
+
+      section.hero {
+        padding: 96px 0 72px;
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--accent);
+        letter-spacing: 0.02em;
+        margin-bottom: 18px;
+      }
+      h1.headline {
+        font-size: 56px;
+        line-height: 1.05;
+        letter-spacing: -0.025em;
+        font-weight: 600;
+        margin: 0 0 20px;
+        max-width: 18ch;
+      }
+      p.tagline {
+        font-size: 19px;
+        color: var(--fg-muted);
+        max-width: 56ch;
+        margin: 0 0 32px;
+      }
+      .install {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-family: var(--mono);
+        font-size: 14px;
+        color: var(--fg);
+      }
+      .install .prompt {
+        color: var(--fg-subtle);
+        user-select: none;
+      }
+      .copy-btn {
+        margin-left: 8px;
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-family: var(--sans);
+        font-size: 12px;
+        color: var(--fg-muted);
+        cursor: pointer;
+      }
+      .copy-btn:hover {
+        color: var(--fg);
+        border-color: var(--fg-subtle);
+      }
+
+      .hero-meta {
+        margin-top: 24px;
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        font-size: 14px;
+        color: var(--fg-subtle);
+      }
+      .hero-meta strong {
+        color: var(--fg);
+        font-weight: 500;
+      }
+
+      section.board {
+        padding: 32px 0 96px;
+        border-top: 1px solid var(--border);
+      }
+      .board-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin: 48px 0 24px;
+        flex-wrap: wrap;
+      }
+      h2.section-title {
+        font-size: 28px;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        font-weight: 600;
+        margin: 0;
+      }
+      .section-sub {
+        color: var(--fg-muted);
+        font-size: 15px;
+        margin: 6px 0 0;
+      }
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .search {
+        font-family: var(--sans);
+        font-size: 14px;
+        padding: 9px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--fg);
+        min-width: 240px;
+        outline: none;
+        transition: border-color 0.12s ease;
+      }
+      .search:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+
+      .table-wrap {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+      table.leaderboard {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      table.leaderboard thead th {
+        text-align: left;
+        font-weight: 500;
+        color: var(--fg-muted);
+        background: var(--bg-soft);
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+      }
+      table.leaderboard thead th[data-sort]:hover {
+        color: var(--fg);
+      }
+      table.leaderboard thead th .sort-arrow {
+        opacity: 0.4;
+        margin-left: 4px;
+        font-size: 11px;
+      }
+      table.leaderboard thead th.sorted .sort-arrow {
+        opacity: 1;
+        color: var(--accent);
+      }
+      table.leaderboard tbody td {
+        padding: 14px 16px;
+        border-top: 1px solid var(--border);
+        vertical-align: middle;
+      }
+      table.leaderboard tbody tr.row-summary {
+        cursor: pointer;
+        transition: background 0.08s ease;
+      }
+      table.leaderboard tbody tr.row-summary:hover {
+        background: var(--bg-soft);
+      }
+      table.leaderboard tbody tr.row-detail {
+        background: var(--bg-soft);
+      }
+      table.leaderboard tbody tr.row-detail td {
+        padding: 0 16px;
+      }
+      .detail-inner {
+        padding: 14px 4px 18px;
+        font-size: 13px;
+        color: var(--fg-muted);
+      }
+      .detail-inner h4 {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--fg);
+        margin: 12px 0 6px;
+        letter-spacing: 0.01em;
+      }
+      .detail-inner h4:first-child {
+        margin-top: 0;
+      }
+      .detail-inner ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+      .detail-inner code {
+        font-family: var(--mono);
+        font-size: 12px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      .pass {
+        color: var(--green);
+      }
+      .fail {
+        color: var(--red);
+      }
+
+      .rank {
+        font-family: var(--mono);
+        color: var(--fg-subtle);
+        width: 1%;
+        white-space: nowrap;
+      }
+      .agent-name {
+        font-weight: 500;
+        color: var(--fg);
+      }
+      .agent-source a {
+        color: var(--fg-muted);
+        font-size: 13px;
+      }
+      .score-pill {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .score-pill.green {
+        color: var(--green);
+        background: var(--green-bg);
+      }
+      .score-pill.yellow {
+        color: var(--yellow);
+        background: var(--yellow-bg);
+      }
+      .score-pill.red {
+        color: var(--red);
+        background: var(--red-bg);
+      }
+      .issues {
+        color: var(--fg-muted);
+        font-size: 13px;
+      }
+      .issue-tag {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 2px 7px;
+        border-radius: 5px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border);
+        margin-right: 6px;
+        color: var(--fg-muted);
+      }
+      .empty {
+        padding: 48px 24px;
+        text-align: center;
+        color: var(--fg-muted);
+        font-size: 15px;
+      }
+      .empty code {
+        font-family: var(--mono);
+        background: var(--bg-soft);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 13px;
+      }
+
+      .badge-section {
+        margin-top: 56px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px 28px;
+      }
+      .badge-section h3 {
+        font-size: 16px;
+        margin: 0 0 6px;
+        letter-spacing: -0.01em;
+      }
+      .badge-section p {
+        color: var(--fg-muted);
+        font-size: 14px;
+        margin: 0 0 14px;
+        max-width: 64ch;
+      }
+      .badge-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .badge-row code {
+        font-family: var(--mono);
+        font-size: 12px;
+        background: var(--bg);
+        padding: 8px 10px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        color: var(--fg-muted);
+      }
+
+      footer.foot {
+        border-top: 1px solid var(--border);
+        padding: 28px 0 48px;
+        font-size: 13px;
+        color: var(--fg-subtle);
+      }
+      .foot-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .foot a {
+        color: var(--fg-muted);
+      }
+
+      @media (max-width: 640px) {
+        h1.headline {
+          font-size: 38px;
+        }
+        section.hero {
+          padding: 64px 0 48px;
+        }
+        .controls {
+          width: 100%;
+        }
+        .search {
+          flex: 1;
+        }
+        table.leaderboard thead th.col-source,
+        table.leaderboard tbody td.col-source {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="nav">
+      <div class="container nav-row">
+        <span class="brand"><span class="brand-dot"></span>agelin</span>
+        <nav class="nav-links">
+          <a href="#leaderboard">Leaderboard</a>
+          <a href="#badge">Badges</a>
+          <a href="https://github.com/AKazaconoks/agelin">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="container">
+        <div class="eyebrow">v0 · pre-alpha</div>
+        <h1 class="headline">Quality scores for Claude Code subagents.</h1>
+        <p class="tagline">
+          ESLint + benchmark harness for Claude Code subagents. Tells you if
+          the subagent actually works — not just if the YAML parses.
+        </p>
+        <div class="install" id="install">
+          <span class="prompt">$</span>
+          <span id="install-cmd">npx agelin check ./.claude/agents/</span>
+          <button class="copy-btn" id="copy-btn" type="button">Copy</button>
+        </div>
+        <div class="hero-meta">
+          <span><strong>15</strong> static rules</span>
+          <span><strong>3</strong> task categories</span>
+          <span><strong>0</strong> framework dependencies</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="board" id="leaderboard">
+      <div class="container">
+        <div class="board-head">
+          <div>
+            <h2 class="section-title">Public leaderboard</h2>
+            <p class="section-sub">
+              Scored against the standard rule set and the v0 task suite.
+              Updated nightly.
+            </p>
+          </div>
+          <div class="controls">
+            <input
+              id="search"
+              class="search"
+              type="search"
+              placeholder="Filter agents…"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="leaderboard" id="board">
+            <thead>
+              <tr>
+                <th data-sort="rank" class="rank sorted">
+                  Rank<span class="sort-arrow">↑</span>
+                </th>
+                <th data-sort="agent">
+                  Agent<span class="sort-arrow">↕</span>
+                </th>
+                <th data-sort="source" class="col-source">
+                  Source<span class="sort-arrow">↕</span>
+                </th>
+                <th data-sort="score">
+                  Score<span class="sort-arrow">↕</span>
+                </th>
+                <th>Top issues</th>
+              </tr>
+            </thead>
+            <tbody id="board-body">
+              <tr>
+                <td class="empty" colspan="5">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="badge-section" id="badge">
+          <h3>Embed your score</h3>
+          <p>
+            Once your repo is on the leaderboard, drop a badge in your README so
+            users can see at a glance that your subagents are well-behaved.
+          </p>
+          <div class="badge-row">
+            <img src="./badges/example.svg" alt="agelin score: 87/100" />
+            <code
+              >![agelin](https://agelin.dev/badges/&lt;owner&gt;/&lt;repo&gt;/&lt;agent&gt;.svg)</code
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <div class="container foot-row">
+        <span>MIT licensed · made for the Claude Code community</span>
+        <span>
+          <a href="https://github.com/AKazaconoks/agelin">GitHub</a>
+          &nbsp;·&nbsp;
+          <a href="https://github.com/AKazaconoks/agelin/issues"
+            >Report an issue</a
+          >
+        </span>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var copyBtn = document.getElementById("copy-btn");
+        var installCmd = document.getElementById("install-cmd");
+        if (copyBtn && installCmd) {
+          copyBtn.addEventListener("click", function () {
+            var text = installCmd.textContent || "";
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(text);
+            }
+            var prev = copyBtn.textContent;
+            copyBtn.textContent = "Copied";
+            setTimeout(function () {
+              copyBtn.textContent = prev;
+            }, 1200);
+          });
+        }
+
+        var body = document.getElementById("board-body");
+        var search = document.getElementById("search");
+        var headers = document.querySelectorAll("th[data-sort]");
+
+        var state = {
+          rows: [],
+          sortKey: "rank",
+          sortDir: "asc",
+          query: "",
+          expanded: new Set(),
+        };
+
+        function scoreClass(score) {
+          if (score >= 80) return "green";
+          if (score >= 50) return "yellow";
+          return "red";
+        }
+
+        function escapeHtml(s) {
+          if (s === null || s === undefined) return "";
+          return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        }
+
+        function topIssues(issues, n) {
+          if (!issues || !issues.length) return [];
+          var seen = {};
+          var out = [];
+          for (var i = 0; i < issues.length && out.length < n; i++) {
+            var id = issues[i].ruleId || issues[i].rule || "";
+            if (!id || seen[id]) continue;
+            seen[id] = true;
+            out.push(id);
+          }
+          return out;
+        }
+
+        function compare(a, b, key, dir) {
+          var av, bv;
+          if (key === "rank") {
+            av = a._rank;
+            bv = b._rank;
+          } else if (key === "score") {
+            av = a.score || 0;
+            bv = b.score || 0;
+          } else if (key === "agent") {
+            av = (a.agent || "").toLowerCase();
+            bv = (b.agent || "").toLowerCase();
+          } else if (key === "source") {
+            av = (a.source || "").toLowerCase();
+            bv = (b.source || "").toLowerCase();
+          } else {
+            av = 0;
+            bv = 0;
+          }
+          if (av < bv) return dir === "asc" ? -1 : 1;
+          if (av > bv) return dir === "asc" ? 1 : -1;
+          return 0;
+        }
+
+        function renderTaskCategories(categories) {
+          if (!categories || !Object.keys(categories).length) {
+            return '<p class="fail">No task results recorded.</p>';
+          }
+          var keys = Object.keys(categories);
+          var html = "<ul>";
+          for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            var c = categories[k] || {};
+            var pass = c.pass || 0;
+            var total = c.total || 0;
+            var cls = total > 0 && pass === total ? "pass" : "fail";
+            html +=
+              "<li><code>" +
+              escapeHtml(k) +
+              "</code> · <span class=\"" +
+              cls +
+              "\">" +
+              pass +
+              " / " +
+              total +
+              " passed</span></li>";
+          }
+          html += "</ul>";
+          return html;
+        }
+
+        function renderDetail(row) {
+          var issues = row.issues || [];
+          var issueHtml;
+          if (!issues.length) {
+            issueHtml = "<p>No static issues. Clean run.</p>";
+          } else {
+            issueHtml = "<ul>";
+            for (var i = 0; i < issues.length; i++) {
+              var iss = issues[i];
+              issueHtml +=
+                "<li><code>" +
+                escapeHtml(iss.ruleId || iss.rule || "") +
+                "</code> · " +
+                escapeHtml(iss.severity || "") +
+                " — " +
+                escapeHtml(iss.message || "") +
+                "</li>";
+            }
+            issueHtml += "</ul>";
+          }
+          return (
+            '<div class="detail-inner">' +
+            "<h4>Static issues</h4>" +
+            issueHtml +
+            "<h4>Task categories</h4>" +
+            renderTaskCategories(row.taskCategories) +
+            "</div>"
+          );
+        }
+
+        function render() {
+          if (!state.rows || !state.rows.length) {
+            body.innerHTML =
+              '<tr><td class="empty" colspan="5">' +
+              "No leaderboard data yet. Drop a <code>leaderboard.json</code> next to <code>index.html</code> to populate this table." +
+              "</td></tr>";
+            return;
+          }
+
+          var q = state.query.trim().toLowerCase();
+          var filtered = state.rows.filter(function (r) {
+            if (!q) return true;
+            return (r.agent || "").toLowerCase().indexOf(q) !== -1;
+          });
+
+          filtered.sort(function (a, b) {
+            return compare(a, b, state.sortKey, state.sortDir);
+          });
+
+          if (!filtered.length) {
+            body.innerHTML =
+              '<tr><td class="empty" colspan="5">No agents match “' +
+              escapeHtml(state.query) +
+              '”.</td></tr>';
+            return;
+          }
+
+          var html = "";
+          for (var i = 0; i < filtered.length; i++) {
+            var r = filtered[i];
+            var cls = scoreClass(r.score || 0);
+            var top = topIssues(r.issues, 3);
+            var topHtml = top.length
+              ? top
+                  .map(function (id) {
+                    return (
+                      '<span class="issue-tag">' + escapeHtml(id) + "</span>"
+                    );
+                  })
+                  .join("")
+              : '<span class="issues">clean</span>';
+            var key = r.agent + "::" + (r.source || "");
+            var isOpen = state.expanded.has(key);
+            var arrow = isOpen ? "▾" : "▸";
+            html +=
+              '<tr class="row-summary" data-key="' +
+              escapeHtml(key) +
+              '">' +
+              '<td class="rank">' +
+              arrow +
+              " " +
+              escapeHtml(String(r._rank)) +
+              "</td>" +
+              '<td class="agent-name">' +
+              escapeHtml(r.agent || "") +
+              "</td>" +
+              '<td class="agent-source col-source">' +
+              (r.sourceUrl
+                ? '<a href="' +
+                  escapeHtml(r.sourceUrl) +
+                  '" rel="noopener">' +
+                  escapeHtml(r.source || "") +
+                  "</a>"
+                : escapeHtml(r.source || "—")) +
+              "</td>" +
+              '<td><span class="score-pill ' +
+              cls +
+              '">' +
+              Math.round(r.score || 0) +
+              "</span></td>" +
+              '<td class="issues">' +
+              topHtml +
+              "</td>" +
+              "</tr>";
+            if (isOpen) {
+              html +=
+                '<tr class="row-detail"><td colspan="5">' +
+                renderDetail(r) +
+                "</td></tr>";
+            }
+          }
+          body.innerHTML = html;
+        }
+
+        function attachRowHandlers() {
+          body.addEventListener("click", function (ev) {
+            var tr = ev.target.closest("tr.row-summary");
+            if (!tr) return;
+            var key = tr.getAttribute("data-key");
+            if (!key) return;
+            if (state.expanded.has(key)) state.expanded.delete(key);
+            else state.expanded.add(key);
+            render();
+          });
+        }
+
+        function attachSortHandlers() {
+          headers.forEach(function (th) {
+            th.addEventListener("click", function () {
+              var key = th.getAttribute("data-sort");
+              if (state.sortKey === key) {
+                state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+              } else {
+                state.sortKey = key;
+                state.sortDir = key === "score" ? "desc" : "asc";
+              }
+              headers.forEach(function (h) {
+                h.classList.remove("sorted");
+                var arrow = h.querySelector(".sort-arrow");
+                if (arrow) arrow.textContent = "↕";
+              });
+              th.classList.add("sorted");
+              var arrow = th.querySelector(".sort-arrow");
+              if (arrow)
+                arrow.textContent = state.sortDir === "asc" ? "↑" : "↓";
+              render();
+            });
+          });
+        }
+
+        function attachSearch() {
+          search.addEventListener("input", function () {
+            state.query = search.value;
+            render();
+          });
+        }
+
+        function normalize(data) {
+          var rows = [];
+          if (!data) return rows;
+          var raw = Array.isArray(data) ? data : data.rows || data.results || [];
+          for (var i = 0; i < raw.length; i++) {
+            var r = raw[i] || {};
+            rows.push({
+              agent: r.agent || r.agentName || r.name || "(unnamed)",
+              source: r.source || r.repo || "",
+              sourceUrl: r.sourceUrl || r.repoUrl || "",
+              score: typeof r.score === "number" ? r.score : 0,
+              issues: r.issues || r.staticIssues || [],
+              taskCategories: r.taskCategories || r.categories || {},
+            });
+          }
+          rows.sort(function (a, b) {
+            return (b.score || 0) - (a.score || 0);
+          });
+          for (var j = 0; j < rows.length; j++) rows[j]._rank = j + 1;
+          return rows;
+        }
+
+        attachRowHandlers();
+        attachSortHandlers();
+        attachSearch();
+
+        fetch("./leaderboard.json", { cache: "no-store" })
+          .then(function (res) {
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            return res.json();
+          })
+          .then(function (data) {
+            state.rows = normalize(data);
+            render();
+          })
+          .catch(function () {
+            state.rows = [];
+            render();
+          });
+      })();
+    </script>
+  </body>
+</html>

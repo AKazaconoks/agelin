@@ -1,0 +1,40 @@
+{
+  "id": "accidentally-quadratic",
+  "category": "code-review",
+  "title": "Spot the O(n^2) hot path in code that looks linear",
+  "prompt": "Review `dedupe.ts`. The team reports that since average customer cart size grew from 50 items to ~5000 items (a B2B onboarding), `dedupe_cart` p99 latency went from 2ms to 6 seconds. They blame the database. The function is pure CPU, so they're wrong about the cause but right that something is broken. Identify and fix.",
+  "fixtures": {
+    "dedupe.ts": "export interface CartLine { sku: string; qty: number; addedAt: number }\n\nexport function dedupeCart(lines: CartLine[]): CartLine[] {\n  const out: CartLine[] = [];\n  for (const line of lines) {\n    const existing = out.find(o => o.sku === line.sku);\n    if (existing) {\n      existing.qty += line.qty;\n      existing.addedAt = Math.min(existing.addedAt, line.addedAt);\n    } else {\n      out.push({ ...line });\n    }\n  }\n  return out;\n}\n"
+  },
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "O\\(n\\s*\\^?\\s*2\\)|O\\(n\\*?\\*?n\\)|quadratic", "flags": "i" },
+          { "kind": "regex", "pattern": "O\\(n\u00b2\\)", "flags": "i" },
+          { "kind": "contains", "needle": "n²", "caseSensitive": false },
+          { "kind": "regex", "pattern": "n\\s+squared", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "\\bMap\\b|\\bSet\\b", "flags": "" },
+          { "kind": "regex", "pattern": "hash[- ]?(map|table)", "flags": "i" },
+          { "kind": "regex", "pattern": "Record<", "flags": "" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "\\.find\\(", "flags": "" },
+          { "kind": "regex", "pattern": "linear\\s+scan", "flags": "i" },
+          { "kind": "regex", "pattern": "inner\\s+loop", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 4000, "maxCostUsd": 0.05, "maxDurationSec": 90, "maxToolCalls": 6 }
+}

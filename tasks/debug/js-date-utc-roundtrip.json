@@ -1,0 +1,36 @@
+{
+  "id": "js-date-utc-roundtrip",
+  "category": "debug",
+  "title": "Find the wire-format bug between a JS client and a Python API",
+  "prompt": "A React frontend POSTs `{ \"birthday\": new Date(form.birthday.value).toISOString() }` to a Python API expecting `birthday` as a `datetime.date`. The form input is a native `<input type=\"date\" value=\"1990-06-15\">`. The Python service stores the value via `date.fromisoformat(payload['birthday'][:10])`. QA in California reports their birthday is correct. QA in Tokyo reports their birthday is one day earlier in the database. What's the bug, and what's the right fix on the wire-format boundary? The frontend cannot ship a new format, but you can change one line in either the frontend serializer or the Python parser.",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "UTC", "flags": "" },
+          { "kind": "regex", "pattern": "midnight\\s+(local|UTC)", "flags": "i" },
+          { "kind": "regex", "pattern": "timezone|time[- ]zone", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "toISOString\\(\\)", "flags": "" },
+          { "kind": "regex", "pattern": "new Date\\(.*\\)", "flags": "" },
+          { "kind": "regex", "pattern": "shifts?\\s+(the\\s+)?date|date\\s+shift", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "send\\s+(the\\s+)?(raw\\s+)?(string|YYYY-MM-DD)|don't\\s+wrap\\s+in\\s+Date", "flags": "i" },
+          { "kind": "regex", "pattern": "form\\.birthday\\.value\\b", "flags": "" },
+          { "kind": "regex", "pattern": "Z\\+|noon\\s+UTC|12:00", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 10000, "maxCostUsd": 0.10, "maxDurationSec": 105, "maxToolCalls": 6 }
+}

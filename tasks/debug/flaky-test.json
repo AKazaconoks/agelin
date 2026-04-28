@@ -1,0 +1,45 @@
+{
+  "id": "flaky-test",
+  "category": "debug",
+  "title": "Identify time-of-day dependency in a flaky test",
+  "prompt": "this test is flaky in CI, passes locally. why and what's the fix?\n\n```python\n# app/notifications.py\nfrom datetime import datetime\n\nBUSINESS_HOURS = range(9, 18)\n\ndef compose_status_message(user_name: str) -> str:\n    now = datetime.now()\n    if now.hour in BUSINESS_HOURS:\n        return f\"Hi {user_name}, our team is online and will respond shortly.\"\n    return f\"Hi {user_name}, our team is offline. We'll respond on the next business day.\"\n\n# the test asserts the 'online' branch unconditionally\n```",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "datetime\\.now", "flags": "i" },
+          { "kind": "regex", "pattern": "(time|hour)[- ]of[- ]day", "flags": "i" },
+          { "kind": "regex", "pattern": "wall[- ]?clock", "flags": "i" },
+          { "kind": "regex", "pattern": "current\\s+(time|hour)", "flags": "i" },
+          { "kind": "regex", "pattern": "depends?\\s+on\\s+(the\\s+)?(time|hour|clock)", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "freezegun|freeze_time", "flags": "i" },
+          { "kind": "regex", "pattern": "monkey ?patch", "flags": "i" },
+          { "kind": "regex", "pattern": "mock(\\.patch)?", "flags": "i" },
+          { "kind": "regex", "pattern": "inject(ed|ion)?\\s+(the\\s+)?(clock|time|now)", "flags": "i" },
+          { "kind": "regex", "pattern": "(clock|time|now)\\s+injection", "flags": "i" },
+          { "kind": "regex", "pattern": "(clock|time|now)\\s+(parameter|argument|kwarg|dependency)", "flags": "i" },
+          { "kind": "regex", "pattern": "dependency\\s+inject", "flags": "i" },
+          { "kind": "regex", "pattern": "optional\\s+(`?now`?|now\\s+parameter|clock\\s+parameter)", "flags": "i" },
+          { "kind": "regex", "pattern": "parameter(ize|ise)d?", "flags": "i" },
+          { "kind": "regex", "pattern": "fake[- ]?clock", "flags": "i" },
+          { "kind": "regex", "pattern": "pass\\s+(in\\s+)?(the\\s+)?(now|time)\\s+(as|to)", "flags": "i" },
+          { "kind": "regex", "pattern": "keyword[- ]?only\\s+(parameter|argument|kwarg)", "flags": "i" },
+          { "kind": "regex", "pattern": "now:\\s*datetime", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": {
+    "maxTokens": 8000,
+    "maxCostUsd": 0.10,
+    "maxDurationSec": 120,
+    "maxToolCalls": 10
+  }
+}

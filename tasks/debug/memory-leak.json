@@ -1,0 +1,36 @@
+{
+  "id": "memory-leak",
+  "category": "debug",
+  "title": "Identify a Node.js subscription leak from the WebSocket layer",
+  "prompt": "node service slowly leaks memory, restart every 2 days. heap snapshot top retainer is `Map<string, Channel>` from `orders.ts`. what's wrong?\n\n```typescript\n// src/orders.ts\nimport { pubsub } from \"./pubsub\";\n\nconst handlers = new Map<string, Channel>();\n\nexport function watchOrder(orderId: string, onUpdate: (msg: OrderMsg) => void): void {\n  const channel = pubsub.subscribe(`order.${orderId}`, onUpdate);\n  handlers.set(orderId, channel);\n}\n\nexport function unwatchOrder(orderId: string): void {\n  handlers.delete(orderId);\n}\n\n// src/server.ts (excerpt)\nws.on(\"message\", (raw) => {\n  const { type, orderId } = JSON.parse(raw);\n  if (type === \"watch\") {\n    watchOrder(orderId, (msg) => ws.send(JSON.stringify(msg)));\n  }\n});\n```",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(unsubscribe|un[- ]?subscribe)", "flags": "i" },
+          { "kind": "regex", "pattern": "remove(All)?[- ]?listener", "flags": "i" },
+          { "kind": "regex", "pattern": "(off|disconnect)\\s*\\(", "flags": "i" },
+          { "kind": "regex", "pattern": "channel\\.close", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "ws\\.on\\([\"']close", "flags": "i" },
+          { "kind": "regex", "pattern": "(websocket|ws)\\s+(close|disconnect)", "flags": "i" },
+          { "kind": "regex", "pattern": "unwatchOrder", "flags": "" },
+          { "kind": "regex", "pattern": "cleanup\\s+on\\s+(close|disconnect)", "flags": "i" },
+          { "kind": "regex", "pattern": "tear[- ]?down", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": {
+    "maxTokens": 8000,
+    "maxCostUsd": 0.10,
+    "maxDurationSec": 90,
+    "maxToolCalls": 10
+  }
+}

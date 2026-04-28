@@ -1,0 +1,41 @@
+{
+  "id": "race-condition",
+  "category": "code-review",
+  "title": "Identify data race on a shared map in Go",
+  "prompt": "Find concurrency issues in `counters.go`. Be specific about what could go wrong and how to fix it.",
+  "fixtures": {
+    "counters.go": "package main\n\nimport (\n\t\"fmt\"\n\t\"sync\"\n)\n\n// Counters keeps a per-key tally. Multiple goroutines call Inc concurrently.\ntype Counters struct {\n\tdata map[string]int\n}\n\nfunc NewCounters() *Counters {\n\treturn &Counters{data: make(map[string]int)}\n}\n\nfunc (c *Counters) Inc(key string) {\n\tc.data[key]++\n}\n\nfunc (c *Counters) Get(key string) int {\n\treturn c.data[key]\n}\n\nfunc main() {\n\tc := NewCounters()\n\tvar wg sync.WaitGroup\n\tfor i := 0; i < 100; i++ {\n\t\twg.Add(1)\n\t\tgo func(i int) {\n\t\t\tdefer wg.Done()\n\t\t\tkey := fmt.Sprintf(\"k%d\", i%5)\n\t\t\tfor j := 0; j < 1000; j++ {\n\t\t\t\tc.Inc(key)\n\t\t\t}\n\t\t}(i)\n\t}\n\twg.Wait()\n\tfor i := 0; i < 5; i++ {\n\t\tfmt.Printf(\"k%d -> %d\\n\", i, c.Get(fmt.Sprintf(\"k%d\", i)))\n\t}\n}\n"
+  },
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "data\\s+race", "flags": "i" },
+          { "kind": "regex", "pattern": "race\\s+condition", "flags": "i" },
+          { "kind": "regex", "pattern": "concurrent\\s+(map\\s+)?(write|access|read)", "flags": "i" },
+          { "kind": "regex", "pattern": "concurrent\\s+map\\s+read\\s*/\\s*write", "flags": "i" },
+          { "kind": "regex", "pattern": "non[- ]atomic", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "sync\\.Mutex", "flags": "" },
+          { "kind": "regex", "pattern": "sync\\.RWMutex", "flags": "" },
+          { "kind": "regex", "pattern": "sync\\.Map", "flags": "" },
+          { "kind": "regex", "pattern": "sync/atomic", "flags": "" },
+          { "kind": "regex", "pattern": "atomic\\.(Add|Int|Value)", "flags": "" },
+          { "kind": "contains", "needle": "channel", "caseSensitive": false }
+        ]
+      }
+    ]
+  },
+  "budget": {
+    "maxTokens": 8000,
+    "maxCostUsd": 0.10,
+    "maxDurationSec": 90,
+    "maxToolCalls": 10
+  }
+}

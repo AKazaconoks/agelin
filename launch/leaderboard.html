@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>agelin leaderboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #161922;
+    --panel-2: #1e2230;
+    --border: #2a2f3d;
+    --text: #e7e9ee;
+    --muted: #8a93a6;
+    --accent: #6aa9ff;
+    --green: #4cd964;
+    --yellow: #ffcc33;
+    --red: #ff5c5c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  header {
+    padding: 32px 40px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 {
+    margin: 0 0 8px;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  header .meta {
+    color: var(--muted);
+    font-size: 13px;
+  }
+  header .meta span + span::before {
+    content: " · ";
+    color: var(--border);
+  }
+  main {
+    padding: 24px 40px 64px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .search {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .search:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .stats {
+    display: flex;
+    gap: 18px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .stat strong {
+    color: var(--text);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  thead th {
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  thead th .arrow {
+    color: var(--accent);
+    margin-left: 4px;
+    opacity: 0.5;
+  }
+  thead th.sorted .arrow { opacity: 1; }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr.row {
+    cursor: pointer;
+  }
+  tbody tr.row:hover {
+    background: var(--panel-2);
+  }
+  tbody tr:last-child { border-bottom: 0; }
+  tbody td {
+    padding: 12px 14px;
+    vertical-align: middle;
+  }
+  td.rank {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    width: 1%;
+  }
+  td.agent {
+    font-weight: 600;
+  }
+  td.agent .repo {
+    display: block;
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  td.score {
+    width: 96px;
+    font-variant-numeric: tabular-nums;
+  }
+  td.score .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    color: #0f1115;
+  }
+  td.score .pill.green { background: var(--green); }
+  td.score .pill.yellow { background: var(--yellow); }
+  td.score .pill.red { background: var(--red); color: #fff; }
+  td.tags { color: var(--muted); font-size: 13px; }
+  td.tags .tag {
+    display: inline-block;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+    color: var(--text);
+    font-size: 12px;
+  }
+  td.license { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  tr.detail td {
+    background: var(--panel-2);
+    padding: 16px 24px 20px;
+  }
+  tr.detail .components {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+  }
+  tr.detail .comp {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+  }
+  tr.detail .comp h3 {
+    margin: 0 0 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  tr.detail .comp .v {
+    font-size: 22px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  tr.detail .comp .bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  tr.detail .comp .bar > div {
+    height: 100%;
+    background: var(--accent);
+  }
+  tr.detail a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  tr.detail a:hover { text-decoration: underline; }
+  tr.detail .links {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  footer {
+    padding: 24px 40px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>agelin leaderboard</h1>
+  <div class="meta">
+    <span>Generated 2026-04-28T06:43:18.945536Z</span>
+    <span>Model static-only</span>
+    <span>v0.0.1</span>
+  </div>
+</header>
+<main>
+  <div class="toolbar">
+    <input id="search" class="search" type="search" placeholder="Filter by agent, repo, or tag..." autocomplete="off">
+    <div class="stats">
+      <div class="stat"><strong id="stat-count">97</strong> agents</div>
+      <div class="stat"><strong>0</strong> tasks</div>
+      <div class="stat"><strong>65.9</strong> mean</div>
+    </div>
+  </div>
+  <table id="lb">
+    <thead>
+      <tr>
+        <th data-key="rank" data-dir="asc">#<span class="arrow"></span></th>
+        <th data-key="agentName" data-dir="asc">Agent<span class="arrow"></span></th>
+        <th data-key="score" data-dir="desc" class="sorted">Score<span class="arrow">&#x25BC;</span></th>
+        <th data-key="staticHealth" data-dir="desc">Static<span class="arrow"></span></th>
+        <th data-key="successRate" data-dir="desc">Success<span class="arrow"></span></th>
+        <th data-key="costEfficiency" data-dir="desc">Cost<span class="arrow"></span></th>
+        <th data-key="consistency" data-dir="desc">Consistency<span class="arrow"></span></th>
+        <th data-key="tags" data-dir="asc">Tags<span class="arrow"></span></th>
+        <th data-key="license" data-dir="asc">License<span class="arrow"></span></th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+</main>
+<footer>
+  Generated by <a href="https://github.com/anthropics/agelin" style="color: var(--accent); text-decoration: none;">agelin</a>.
+  Scores are 0-100 composites of static health, golden-task success rate, cost efficiency, and consistency across repeats.
+</footer>
+<script>
+const DATA = {"generatedAt":"2026-04-28T06:43:18.945536Z","toolVersion":"0.0.1","modelUsed":"static-only","totalAgents":97,"totalTasks":0,"meanScore":65.87628865979381,"entries":[{"rank":0,"agentName":"cassandra-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":94,"components":{"staticHealth":94,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","verbosity-encouraged","missing-input-preconditions"]},{"rank":0,"agentName":"cockroachdb-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":94,"components":{"staticHealth":94,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","verbosity-encouraged","missing-input-preconditions"]},{"rank":0,"agentName":"ansible-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":88,"components":{"staticHealth":88,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","missing-input-preconditions"]},{"rank":0,"agentName":"ava-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":88,"components":{"staticHealth":88,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","description-uses-cliche","missing-input-preconditions"]},{"rank":0,"agentName":"c-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":88,"components":{"staticHealth":88,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","description-uses-cliche","missing-input-preconditions"]},{"rank":0,"agentName":"clojure-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":88,"components":{"staticHealth":88,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","missing-input-preconditions"]},{"rank":0,"agentName":"css-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":88,"components":{"staticHealth":88,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","description-uses-cliche","missing-input-preconditions"]},{"rank":0,"agentName":"angular-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":86,"components":{"staticHealth":86,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","verbosity-encouraged"]},{"rank":0,"agentName":"bash-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":86,"components":{"staticHealth":86,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","verbosity-encouraged","description-uses-cliche"]},{"rank":0,"agentName":"braintree-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":86,"components":{"staticHealth":86,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","verbosity-encouraged"]},{"rank":0,"agentName":"circleci-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":86,"components":{"staticHealth":86,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","verbosity-encouraged","description-uses-cliche"]},{"rank":0,"agentName":"cpp-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":86,"components":{"staticHealth":86,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["vague-pronouns","no-examples","description-uses-cliche"]},{"rank":0,"agentName":"dart-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":86,"components":{"staticHealth":86,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","verbosity-encouraged"]},{"rank":0,"agentName":"django-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":86,"components":{"staticHealth":86,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","verbosity-encouraged"]},{"rank":0,"agentName":"electron-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":86,"components":{"staticHealth":86,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","verbosity-encouraged"]},{"rank":0,"agentName":"angular-architect","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":82,"components":{"staticHealth":82,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","verbosity-encouraged","tool-body-mismatch"]},{"rank":0,"agentName":"javascript-pro","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":82,"components":{"staticHealth":82,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","verbosity-encouraged","tool-body-mismatch"]},{"rank":0,"agentName":"nextjs-developer","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":82,"components":{"staticHealth":82,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","verbosity-encouraged","tool-body-mismatch"]},{"rank":0,"agentName":"csharp-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":80,"components":{"staticHealth":80,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","description-uses-cliche"]},{"rank":0,"agentName":"elasticsearch-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":80,"components":{"staticHealth":80,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","description-uses-cliche"]},{"rank":0,"agentName":"actix-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":78,"components":{"staticHealth":78,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","verbosity-encouraged"]},{"rank":0,"agentName":"android-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":78,"components":{"staticHealth":78,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","verbosity-encouraged"]},{"rank":0,"agentName":"angularjs-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":78,"components":{"staticHealth":78,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","verbosity-encouraged"]},{"rank":0,"agentName":"aspnet-core-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":78,"components":{"staticHealth":78,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","verbosity-encouraged"]},{"rank":0,"agentName":"astro-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":78,"components":{"staticHealth":78,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","verbosity-encouraged"]},{"rank":0,"agentName":"auth0-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":78,"components":{"staticHealth":78,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","verbosity-encouraged"]},{"rank":0,"agentName":"bullmq-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":78,"components":{"staticHealth":78,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","unbounded-retry","verbosity-encouraged"]},{"rank":0,"agentName":"bun-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":78,"components":{"staticHealth":78,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","verbosity-encouraged"]},{"rank":0,"agentName":"deno-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":78,"components":{"staticHealth":78,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","verbosity-encouraged"]},{"rank":0,"agentName":"docker-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":78,"components":{"staticHealth":78,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","verbosity-encouraged"]},{"rank":0,"agentName":"dynamodb-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":78,"components":{"staticHealth":78,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","unbounded-retry","verbosity-encouraged"]},{"rank":0,"agentName":"php-pro","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":78,"components":{"staticHealth":78,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","no-verification-step","tool-body-mismatch"]},{"rank":0,"agentName":"backend-developer","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":76,"components":{"staticHealth":76,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","verbosity-encouraged","no-verification-step"]},{"rank":0,"agentName":"golang-pro","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":76,"components":{"staticHealth":76,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","verbosity-encouraged","no-verification-step"]},{"rank":0,"agentName":"graphql-architect","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":76,"components":{"staticHealth":76,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","no-verification-step","tool-body-mismatch"]},{"rank":0,"agentName":"java-architect","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":76,"components":{"staticHealth":76,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","verbosity-encouraged","no-verification-step"]},{"rank":0,"agentName":"cloud-architect","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":76,"components":{"staticHealth":76,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","no-verification-step"]},{"rank":0,"agentName":"django-developer","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":74,"components":{"staticHealth":74,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"electron-pro","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":74,"components":{"staticHealth":74,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","no-verification-step","tool-body-mismatch"]},{"rank":0,"agentName":"fastapi-developer","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":74,"components":{"staticHealth":74,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"fullstack-developer","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":74,"components":{"staticHealth":74,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","verbosity-encouraged","no-verification-step"]},{"rank":0,"agentName":"powershell-5.1-expert","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":74,"components":{"staticHealth":74,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","verbosity-encouraged","no-verification-step"]},{"rank":0,"agentName":"node-specialist","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":72,"components":{"staticHealth":72,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","no-verification-step","tool-body-mismatch"]},{"rank":0,"agentName":"celery-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":70,"components":{"staticHealth":70,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","unbounded-retry"]},{"rank":0,"agentName":"cypress-expert","sourceRepo":"0xfurai/claude-code-subagents","sourceUrl":"","license":"unknown","score":70,"components":{"staticHealth":70,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","unbounded-retry"]},{"rank":0,"agentName":"frontend-developer","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":70,"components":{"staticHealth":70,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","no-verification-step","tool-body-mismatch"]},{"rank":0,"agentName":"nextjs-pro","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":70,"components":{"staticHealth":70,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","description-uses-cliche"]},{"rank":0,"agentName":"cpp-pro","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":68,"components":{"staticHealth":68,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"ai-engineer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":68,"components":{"staticHealth":68,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","unbounded-retry"]},{"rank":0,"agentName":"prompt-engineer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":68,"components":{"staticHealth":68,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"api-designer","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":66,"components":{"staticHealth":66,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","unbounded-retry","verbosity-encouraged"]},{"rank":0,"agentName":"csharp-developer","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":66,"components":{"staticHealth":66,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"design-bridge","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":66,"components":{"staticHealth":66,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","no-verification-step","tool-list-too-broad"]},{"rank":0,"agentName":"dotnet-core-expert","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":66,"components":{"staticHealth":66,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"dotnet-framework-4.8-expert","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":66,"components":{"staticHealth":66,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"microservices-architect","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":66,"components":{"staticHealth":66,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","unbounded-retry","verbosity-encouraged"]},{"rank":0,"agentName":"devops-incident-responder","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":66,"components":{"staticHealth":66,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","no-verification-step"]},{"rank":0,"agentName":"frontend-developer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":66,"components":{"staticHealth":66,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","no-verification-step"]},{"rank":0,"agentName":"product-manager","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":66,"components":{"staticHealth":66,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","tools-as-string-not-array"]},{"rank":0,"agentName":"react-pro","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":66,"components":{"staticHealth":66,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","description-uses-cliche"]},{"rank":0,"agentName":"ui-designer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":66,"components":{"staticHealth":66,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"flutter-expert","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":64,"components":{"staticHealth":64,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"kotlin-specialist","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":64,"components":{"staticHealth":64,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"backend-architect","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":64,"components":{"staticHealth":64,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","no-verification-step"]},{"rank":0,"agentName":"dx-optimizer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":64,"components":{"staticHealth":64,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","no-verification-step"]},{"rank":0,"agentName":"legacy-modernizer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":64,"components":{"staticHealth":64,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"ux-designer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":64,"components":{"staticHealth":64,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tool-overreach","no-examples","tools-as-string-not-array"]},{"rank":0,"agentName":"database-optimizer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":62,"components":{"staticHealth":62,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tools-as-string-not-array","no-verification-step","tool-body-mismatch"]},{"rank":0,"agentName":"deployment-engineer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":62,"components":{"staticHealth":62,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","no-verification-step"]},{"rank":0,"agentName":"python-pro","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":62,"components":{"staticHealth":62,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"typescript-pro","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":62,"components":{"staticHealth":62,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"ui-designer","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":60,"components":{"staticHealth":60,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"websocket-engineer","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":60,"components":{"staticHealth":60,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-exit-criteria","no-negative-constraints","tools-as-string-not-array"]},{"rank":0,"agentName":"data-engineer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":60,"components":{"staticHealth":60,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"elixir-expert","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":58,"components":{"staticHealth":58,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["prompt-too-long","tools-as-string-not-array","unbounded-retry"]},{"rank":0,"agentName":"laravel-specialist","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":58,"components":{"staticHealth":58,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","tools-as-string-not-array","unbounded-retry"]},{"rank":0,"agentName":"agent-organizer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":58,"components":{"staticHealth":58,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["prompt-too-long","tools-as-string-not-array","no-verification-step"]},{"rank":0,"agentName":"expo-react-native-expert","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":56,"components":{"staticHealth":56,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["prompt-too-long","tools-as-string-not-array","unbounded-retry"]},{"rank":0,"agentName":"data-scientist","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":56,"components":{"staticHealth":56,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","no-verification-step"]},{"rank":0,"agentName":"full-stack-developer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":54,"components":{"staticHealth":54,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-exit-criteria","prompt-too-long","no-examples"]},{"rank":0,"agentName":"ml-engineer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":54,"components":{"staticHealth":54,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-exit-criteria","no-examples","tools-as-string-not-array"]},{"rank":0,"agentName":"mobile-developer","sourceRepo":"VoltAgent/awesome-claude-code-subagents","sourceUrl":"","license":"unknown","score":52,"components":{"staticHealth":52,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","prompt-too-long","tools-as-string-not-array"]},{"rank":0,"agentName":"golang-pro","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":52,"components":{"staticHealth":52,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tool-overreach","no-examples","tools-as-string-not-array"]},{"rank":0,"agentName":"graphql-architect","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":52,"components":{"staticHealth":52,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["tool-overreach","role-play-bloat","no-examples"]},{"rank":0,"agentName":"incident-responder","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":52,"components":{"staticHealth":52,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","cost-bomb","no-examples"]},{"rank":0,"agentName":"mobile-developer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":52,"components":{"staticHealth":52,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","tools-as-string-not-array","verbosity-encouraged"]},{"rank":0,"agentName":"performance-engineer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":48,"components":{"staticHealth":48,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-exit-criteria","no-examples","tools-as-string-not-array"]},{"rank":0,"agentName":"architect-reviewer","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":45,"components":{"staticHealth":45,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","frontmatter-name-mismatch","tools-as-string-not-array"]},{"rank":0,"agentName":"electron-pro","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":41,"components":{"staticHealth":41,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","frontmatter-name-mismatch","tools-as-string-not-array"]},{"rank":0,"agentName":"postgresql-pglite-pro","sourceRepo":"lst97/claude-code-sub-agents","sourceUrl":"","license":"unknown","score":31,"components":{"staticHealth":31,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","frontmatter-name-mismatch","tools-as-string-not-array"]},{"rank":0,"agentName":"(unnamed)","sourceRepo":"iannuttall/claude-agents","sourceUrl":"","license":"unknown","score":17,"components":{"staticHealth":17,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["frontmatter-description-missing","undefined-output-shape","parse-error"]},{"rank":0,"agentName":"(unnamed)","sourceRepo":"iannuttall/claude-agents","sourceUrl":"","license":"unknown","score":15,"components":{"staticHealth":15,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","frontmatter-description-missing","undefined-output-shape"]},{"rank":0,"agentName":"(unnamed)","sourceRepo":"iannuttall/claude-agents","sourceUrl":"","license":"unknown","score":13,"components":{"staticHealth":13,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-examples","frontmatter-description-missing","undefined-output-shape"]},{"rank":0,"agentName":"(unnamed)","sourceRepo":"iannuttall/claude-agents","sourceUrl":"","license":"unknown","score":9,"components":{"staticHealth":9,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["prompt-too-long","frontmatter-description-missing","undefined-output-shape"]},{"rank":0,"agentName":"(unnamed)","sourceRepo":"iannuttall/claude-agents","sourceUrl":"","license":"unknown","score":5,"components":{"staticHealth":5,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-exit-criteria","no-examples","frontmatter-description-missing"]},{"rank":0,"agentName":"(unnamed)","sourceRepo":"iannuttall/claude-agents","sourceUrl":"","license":"unknown","score":5,"components":{"staticHealth":5,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["prompt-too-long","frontmatter-description-missing","undefined-output-shape"]},{"rank":0,"agentName":"(unnamed)","sourceRepo":"iannuttall/claude-agents","sourceUrl":"","license":"unknown","score":5,"components":{"staticHealth":5,"successRate":0,"costEfficiency":0,"consistency":0},"tags":["no-negative-constraints","no-examples","frontmatter-description-missing"]}]};
+const ENTRIES = DATA.entries.slice();
+const tbody = document.getElementById('rows');
+const search = document.getElementById('search');
+const ths = document.querySelectorAll('thead th');
+const statCount = document.getElementById('stat-count');
+
+let state = { sortKey: 'score', sortDir: 'desc', q: '' };
+const expanded = new Set();
+
+function scoreClass(s) {
+  if (s >= 80) return 'green';
+  if (s >= 50) return 'yellow';
+  return 'red';
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function compare(a, b, key) {
+  const av = key in a ? a[key] : (a.components ? a.components[key] : undefined);
+  const bv = key in b ? b[key] : (b.components ? b.components[key] : undefined);
+  if (key === 'tags') {
+    return (a.tags.join(',')).localeCompare(b.tags.join(','));
+  }
+  if (key === 'license') {
+    return String(a.license || '').localeCompare(String(b.license || ''));
+  }
+  if (typeof av === 'number' && typeof bv === 'number') return av - bv;
+  return String(av).localeCompare(String(bv));
+}
+
+function matches(entry, q) {
+  if (!q) return true;
+  const hay = [
+    entry.agentName,
+    entry.sourceRepo,
+    entry.license || '',
+    entry.tags.join(' '),
+  ].join(' ').toLowerCase();
+  return hay.includes(q.toLowerCase());
+}
+
+function render() {
+  const filtered = ENTRIES.filter(e => matches(e, state.q));
+  filtered.sort((a, b) => {
+    const cmp = compare(a, b, state.sortKey);
+    return state.sortDir === 'desc' ? -cmp : cmp;
+  });
+  statCount.textContent = filtered.length;
+
+  const html = [];
+  for (const e of filtered) {
+    const cls = scoreClass(e.score);
+    const tagHtml = e.tags.map(t => '<span class="tag">' + escapeHtml(t) + '</span>').join('');
+    const repo = e.sourceUrl
+      ? '<a href="' + escapeHtml(e.sourceUrl) + '" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none;">' + escapeHtml(e.sourceRepo) + '</a>'
+      : escapeHtml(e.sourceRepo);
+    html.push(
+      '<tr class="row" data-name="' + escapeHtml(e.agentName) + '">' +
+        '<td class="rank">' + e.rank + '</td>' +
+        '<td class="agent">' + escapeHtml(e.agentName) + '<span class="repo">' + repo + '</span></td>' +
+        '<td class="score"><span class="pill ' + cls + '">' + e.score.toFixed(1) + '</span></td>' +
+        '<td>' + e.components.staticHealth.toFixed(0) + '</td>' +
+        '<td>' + e.components.successRate.toFixed(0) + '</td>' +
+        '<td>' + e.components.costEfficiency.toFixed(0) + '</td>' +
+        '<td>' + e.components.consistency.toFixed(0) + '</td>' +
+        '<td class="tags">' + tagHtml + '</td>' +
+        '<td class="license">' + escapeHtml(e.license || '') + '</td>' +
+      '</tr>'
+    );
+    if (expanded.has(e.agentName)) {
+      html.push(detailRow(e));
+    }
+  }
+  tbody.innerHTML = html.join('');
+
+  for (const th of ths) {
+    th.classList.remove('sorted');
+    const arrow = th.querySelector('.arrow');
+    if (arrow) arrow.innerHTML = '';
+    if (th.dataset.key === state.sortKey) {
+      th.classList.add('sorted');
+      if (arrow) arrow.innerHTML = state.sortDir === 'desc' ? '&#x25BC;' : '&#x25B2;';
+    }
+  }
+}
+
+function detailRow(e) {
+  const comps = [
+    ['Static health', e.components.staticHealth],
+    ['Success rate', e.components.successRate],
+    ['Cost efficiency', e.components.costEfficiency],
+    ['Consistency', e.components.consistency],
+  ];
+  const compHtml = comps.map(c =>
+    '<div class="comp">' +
+      '<h3>' + escapeHtml(c[0]) + '</h3>' +
+      '<div class="v">' + c[1].toFixed(1) + '</div>' +
+      '<div class="bar"><div style="width: ' + Math.max(0, Math.min(100, c[1])) + '%"></div></div>' +
+    '</div>'
+  ).join('');
+  const link = e.sourceUrl
+    ? '<a href="' + escapeHtml(e.sourceUrl) + '" target="_blank" rel="noopener">View source on GitHub</a>'
+    : '(no source URL recorded)';
+  return '<tr class="detail"><td colspan="9">' +
+    '<div class="components">' + compHtml + '</div>' +
+    '<div class="links">' + link + '</div>' +
+  '</td></tr>';
+}
+
+for (const th of ths) {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if (state.sortKey === key) {
+      state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      state.sortKey = key;
+      state.sortDir = th.dataset.dir || 'desc';
+    }
+    render();
+  });
+}
+
+tbody.addEventListener('click', (ev) => {
+  const tr = ev.target.closest('tr.row');
+  if (!tr) return;
+  const name = tr.dataset.name;
+  if (expanded.has(name)) expanded.delete(name);
+  else expanded.add(name);
+  render();
+});
+
+search.addEventListener('input', () => {
+  state.q = search.value.trim();
+  render();
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "id": "cache-stampede",
+  "category": "debug",
+  "title": "Diagnose latency spikes after a cache eviction",
+  "prompt": "Our `/recommendations` endpoint normally serves at p99=80ms. Every 5 minutes — exactly when the recommendations cache expires — p99 spikes to 4-6 seconds for ~15 seconds, then recovers. The recommendation function is CPU- and DB-heavy and takes ~3s to compute. Cache TTL is hardcoded to 300s. The relevant snippet:\n\n```python\ndef get_recs(user_id: str) -> list[Rec]:\n    cached = redis.get(f\"recs:{user_id}\")\n    if cached:\n        return pickle.loads(cached)\n    recs = compute_recs(user_id)  # ~3s\n    redis.set(f\"recs:{user_id}\", pickle.dumps(recs), ex=300)\n    return recs\n```\n\n`compute_recs` is shared across users (returns the same global list). Roughly 8000 RPS hit this endpoint at peak. Diagnose the spike pattern and prescribe the smallest change that eliminates it without breaking caching semantics.",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(cache|thundering[- ]herd|dog[- ]?pile)\\s*stampede|cache\\s+stampede", "flags": "i" },
+          { "kind": "regex", "pattern": "thundering\\s+herd", "flags": "i" },
+          { "kind": "regex", "pattern": "dog[- ]?pile", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "lock|mutex|setnx|single[- ]flight|singleflight", "flags": "i" },
+          { "kind": "regex", "pattern": "lease|probabilistic\\s+(early\\s+)?(refresh|expir)", "flags": "i" },
+          { "kind": "regex", "pattern": "stale[- ]while[- ]revalidate", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "global|shared|same\\s+across\\s+users|per[- ]user\\s+key\\s+is\\s+wrong", "flags": "i" },
+          { "kind": "regex", "pattern": "key.*recs:.*user_id", "flags": "i" },
+          { "kind": "regex", "pattern": "wasted\\s+(memory|entries)", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 6000, "maxCostUsd": 0.07, "maxDurationSec": 90, "maxToolCalls": 8 }
+}

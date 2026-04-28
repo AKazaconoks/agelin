@@ -1,0 +1,25 @@
+{
+  "id": "timeout",
+  "category": "debug",
+  "title": "Diagnose a connection timeout from a stack trace",
+  "prompt": "Diagnose this incident. What's happening and what should we do about it?\n\n```\n2026-04-21T03:14:09Z  ERROR  payments.gateway  request to https://api.stripe.com/v1/charges failed\nTraceback (most recent call last):\n  File \"/app/payments/gateway.py\", line 88, in post\n    resp = self._session.post(url, data=payload, timeout=5)\n  File \"/usr/local/lib/python3.11/site-packages/requests/adapters.py\", line 532, in send\n    raise ConnectTimeout(e, request=request)\nrequests.exceptions.ConnectTimeout: HTTPSConnectionPool(host='api.stripe.com', port=443):\n  Max retries exceeded with url: /v1/charges (Caused by ConnectTimeoutError(\n    <urllib3.connection.HTTPSConnection object at 0x7f3b1c0a2b50>,\n    'Connection to api.stripe.com timed out. (connect timeout=5)'))\n```\n\nThis happens roughly once every 200 requests during peak traffic.",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      { "kind": "contains", "needle": "timeout", "caseSensitive": false },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "contains", "needle": "retry", "caseSensitive": false },
+          { "kind": "contains", "needle": "connection pool", "caseSensitive": false }
+        ]
+      }
+    ]
+  },
+  "budget": {
+    "maxTokens": 8000,
+    "maxCostUsd": 0.10,
+    "maxDurationSec": 180,
+    "maxToolCalls": 10
+  }
+}

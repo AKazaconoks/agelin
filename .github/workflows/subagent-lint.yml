@@ -1,0 +1,188 @@
+# agelin — drop-in PR quality gate for Claude Code subagents.
+#
+# Drop this file in your repo at .github/workflows/agelin.yml. PRs that
+# touch `.claude/agents/**/*.md` will get a sticky comment with a quality
+# report and a score delta against the base branch.
+#
+# This workflow can be used in two ways:
+#
+#   1. Direct (default) — copy this file as-is. The pull_request trigger
+#      runs it with default settings (`fail-on: error`).
+#
+#   2. Reusable — call it from another workflow to override the severity
+#      gate:
+#
+#        jobs:
+#          quality:
+#            uses: AKazaconoks/agelin/.github/workflows/agelin.yml@main
+#            with:
+#              fail-on: warning
+#
+# Severity gates:
+#   error    (default) — fail the check on any error-severity issue
+#   warning  — fail on warnings or worse
+#   none     — never fail; comment only
+
+name: agelin
+
+on:
+  pull_request:
+    paths:
+      - '.claude/agents/**/*.md'
+  workflow_call:
+    inputs:
+      fail-on:
+        description: 'Severity gate: error | warning | none'
+        type: string
+        required: false
+        default: 'error'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  lint:
+    name: Lint subagents
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Lint head (PR)
+        id: head
+        continue-on-error: true
+        run: |
+          set +e
+          npx --yes agelin check --format=markdown ./.claude/agents/ > head.md
+          echo "exit=$?" >> "$GITHUB_OUTPUT"
+          npx --yes agelin check --format=json ./.claude/agents/ > head.json || true
+
+      - name: Checkout base branch
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git worktree add ../base "origin/${{ github.base_ref }}"
+
+      - name: Lint base
+        id: base
+        continue-on-error: true
+        working-directory: ../base
+        run: |
+          if [ -d ./.claude/agents ]; then
+            npx --yes agelin check --format=json ./.claude/agents/ > "$GITHUB_WORKSPACE/base.json" || true
+          else
+            echo '{"results": []}' > "$GITHUB_WORKSPACE/base.json"
+          fi
+
+      - name: Compute score deltas
+        run: |
+          node <<'EOF' > diff.json
+          const fs = require('fs');
+          const read = (p) => {
+            try { return JSON.parse(fs.readFileSync(p, 'utf8')); }
+            catch { return { results: [] }; }
+          };
+          const head = read('head.json');
+          const base = read('base.json');
+          const baseByName = new Map((base.results || []).map(r => [r.agentName, r.score]));
+          const rows = (head.results || []).map(r => ({
+            name: r.agentName,
+            score: r.score,
+            baseScore: baseByName.has(r.agentName) ? baseByName.get(r.agentName) : null,
+            delta: baseByName.has(r.agentName) ? r.score - baseByName.get(r.agentName) : null,
+            errors: (r.staticIssues || []).filter(i => i.severity === 'error').length,
+            warnings: (r.staticIssues || []).filter(i => i.severity === 'warning').length,
+          }));
+          process.stdout.write(JSON.stringify({ rows }));
+          EOF
+
+      - name: Post sticky comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const headMd = fs.existsSync('head.md')
+              ? fs.readFileSync('head.md', 'utf8')
+              : '_no markdown report produced_';
+            const diff = JSON.parse(fs.readFileSync('diff.json', 'utf8'));
+
+            const fmtDelta = (d) => {
+              if (d === null || d === undefined) return 'new';
+              if (d > 0) return `+${d}`;
+              if (d < 0) return `${d}`;
+              return '0';
+            };
+
+            const tableLines = [
+              '| Agent | Score | Δ vs base | Errors | Warnings |',
+              '|-------|-------|-----------|--------|----------|',
+            ];
+            for (const row of diff.rows) {
+              tableLines.push(
+                `| ${row.name} | ${row.score} | ${fmtDelta(row.delta)} | ${row.errors} | ${row.warnings} |`
+              );
+            }
+
+            const marker = '<!-- agelin:sticky -->';
+            const body = [
+              marker,
+              '## agelin report',
+              '',
+              tableLines.join('\n'),
+              '',
+              '<details><summary>Full report</summary>',
+              '',
+              headMd,
+              '',
+              '</details>',
+              '',
+              '_Posted by [agelin](https://github.com/AKazaconoks/agelin)._',
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number, body,
+              });
+            }
+
+      - name: Apply severity gate
+        env:
+          FAIL_ON: ${{ inputs.fail-on || 'error' }}
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const failOn = (process.env.FAIL_ON || 'error').toLowerCase();
+          if (failOn === 'none') { process.exit(0); }
+          let head;
+          try { head = JSON.parse(fs.readFileSync('head.json', 'utf8')); }
+          catch { console.error('No head.json — skipping gate.'); process.exit(0); }
+          const issues = (head.results || []).flatMap(r => r.staticIssues || []);
+          const errs = issues.filter(i => i.severity === 'error').length;
+          const warns = issues.filter(i => i.severity === 'warning').length;
+          if (failOn === 'error' && errs > 0) {
+            console.error(`Gate failed: ${errs} error(s).`); process.exit(1);
+          }
+          if (failOn === 'warning' && (errs > 0 || warns > 0)) {
+            console.error(`Gate failed: ${errs} error(s), ${warns} warning(s).`); process.exit(1);
+          }
+          console.log('Gate passed.');
+          EOF

@@ -1,0 +1,35 @@
+{
+  "id": "interest-off-by-one",
+  "category": "code-review",
+  "title": "Find the off-by-one in a daily-interest accrual loop",
+  "prompt": "Review `accrual.py`. A customer opened a 30-day promotional loan on 2026-03-01 and closed it on 2026-03-31 (paid in full at end-of-day). The product spec says interest accrues for each full day the principal is outstanding (so 30 days here). QA reports the customer was charged 31 days of interest. The code below is what shipped. Identify the bug and propose the minimal fix.",
+  "fixtures": {
+    "accrual.py": "from datetime import date\n\nDAILY_RATE = 0.0004  # 0.04% per day\n\ndef total_interest(principal_cents: int, opened_on: date, closed_on: date) -> int:\n    days = (closed_on - opened_on).days + 1\n    accrued = 0\n    for _ in range(days):\n        accrued += int(principal_cents * DAILY_RATE)\n    return accrued\n"
+  },
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "off[- ]by[- ]one", "flags": "i" },
+          { "kind": "regex", "pattern": "\\+\\s*1", "flags": "" },
+          { "kind": "regex", "pattern": "fencepost", "flags": "i" },
+          { "kind": "regex", "pattern": "inclusive\\s+(of\\s+)?(both\\s+)?endpoints", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "remove\\s+the\\s+\\+\\s*1", "flags": "i" },
+          { "kind": "regex", "pattern": "drop\\s+the\\s+\\+\\s*1", "flags": "i" },
+          { "kind": "regex", "pattern": "spurious\\s+\\+\\s*1", "flags": "i" },
+          { "kind": "regex", "pattern": "no\\s+adjustment\\s+(is\\s+)?need", "flags": "i" },
+          { "kind": "regex", "pattern": "already\\s+returns\\s+(the\\s+)?(number\\s+of\\s+)?(elapsed\\s+)?days", "flags": "i" },
+          { "kind": "regex", "pattern": "days\\s*=\\s*\\(closed_on\\s*-\\s*opened_on\\)\\.days\\b", "flags": "" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 4000, "maxCostUsd": 0.05, "maxDurationSec": 75, "maxToolCalls": 6 }
+}

@@ -1,0 +1,634 @@
+{
+  "generatedAt": "2026-04-28T08:28:44.789259Z",
+  "toolVersion": "0.1.0-pre",
+  "totalAgents": 24,
+  "totalTasks": 12,
+  "staticMedian": 86.0,
+  "benchMedian": 79.5,
+  "entries": [
+    {
+      "rank": 1,
+      "agentName": "angular-expert",
+      "staticScore": 86,
+      "benchScore": 86.8,
+      "quadrant": "high-high",
+      "topRules": [
+        "no-negative-constraints",
+        "no-examples",
+        "verbosity-encouraged"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 2,
+      "agentName": "braintree-expert",
+      "staticScore": 86,
+      "benchScore": 86.8,
+      "quadrant": "high-high",
+      "topRules": [
+        "no-negative-constraints",
+        "no-examples",
+        "verbosity-encouraged"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 3,
+      "agentName": "cpp-expert",
+      "staticScore": 86,
+      "benchScore": 86.8,
+      "quadrant": "high-high",
+      "topRules": [
+        "vague-pronouns",
+        "no-examples",
+        "description-uses-cliche"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 4,
+      "agentName": "dart-expert",
+      "staticScore": 86,
+      "benchScore": 86.8,
+      "quadrant": "high-high",
+      "topRules": [
+        "no-negative-constraints",
+        "no-examples",
+        "verbosity-encouraged"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 5,
+      "agentName": "cassandra-expert",
+      "staticScore": 94,
+      "benchScore": 82.5,
+      "quadrant": "high-high",
+      "topRules": [
+        "no-examples",
+        "verbosity-encouraged",
+        "missing-input-preconditions"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 0.0,
+        "n-plus-one": 1.0,
+        "race-condition": 0.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 1.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 6,
+      "agentName": "cockroachdb-expert",
+      "staticScore": 94,
+      "benchScore": 82.5,
+      "quadrant": "high-high",
+      "topRules": [
+        "no-examples",
+        "verbosity-encouraged",
+        "missing-input-preconditions"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 0.0,
+        "n-plus-one": 1.0,
+        "race-condition": 0.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 1.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 7,
+      "agentName": "architect-reviewer",
+      "staticScore": 45,
+      "benchScore": 81.2,
+      "quadrant": "low-high",
+      "topRules": [
+        "no-examples",
+        "frontmatter-name-mismatch",
+        "tools-as-string-not-array"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 1.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 8,
+      "agentName": "ansible-expert",
+      "staticScore": 88,
+      "benchScore": 80.2,
+      "quadrant": "high-high",
+      "topRules": [
+        "no-negative-constraints",
+        "no-examples",
+        "missing-input-preconditions"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 0.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 1.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 0.0
+      }
+    },
+    {
+      "rank": 9,
+      "agentName": "clojure-expert",
+      "staticScore": 88,
+      "benchScore": 80.2,
+      "quadrant": "high-high",
+      "topRules": [
+        "no-negative-constraints",
+        "no-examples",
+        "missing-input-preconditions"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 0.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 10,
+      "agentName": "css-expert",
+      "staticScore": 88,
+      "benchScore": 80.2,
+      "quadrant": "high-high",
+      "topRules": [
+        "no-examples",
+        "description-uses-cliche",
+        "missing-input-preconditions"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 0.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 11,
+      "agentName": "circleci-expert",
+      "staticScore": 86,
+      "benchScore": 79.5,
+      "quadrant": "high-high",
+      "topRules": [
+        "no-examples",
+        "verbosity-encouraged",
+        "description-uses-cliche"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 0.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 12,
+      "agentName": "django-expert",
+      "staticScore": 86,
+      "benchScore": 79.5,
+      "quadrant": "high-high",
+      "topRules": [
+        "no-negative-constraints",
+        "no-examples",
+        "verbosity-encouraged"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 0.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 13,
+      "agentName": "electron-expert",
+      "staticScore": 86,
+      "benchScore": 79.5,
+      "quadrant": "high-high",
+      "topRules": [
+        "no-negative-constraints",
+        "no-examples",
+        "verbosity-encouraged"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 0.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 14,
+      "agentName": "incident-responder",
+      "staticScore": 52,
+      "benchScore": 74.0,
+      "quadrant": "low-low",
+      "topRules": [
+        "no-negative-constraints",
+        "cost-bomb",
+        "no-examples"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 0.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 1.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 15,
+      "agentName": "c-expert",
+      "staticScore": 88,
+      "benchScore": 73.6,
+      "quadrant": "high-low",
+      "topRules": [
+        "no-examples",
+        "description-uses-cliche",
+        "missing-input-preconditions"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 0.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 0.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 16,
+      "agentName": "bash-expert",
+      "staticScore": 86,
+      "benchScore": 72.9,
+      "quadrant": "high-low",
+      "topRules": [
+        "no-examples",
+        "verbosity-encouraged",
+        "description-uses-cliche"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 0.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 0.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 17,
+      "agentName": "postgresql-pglite-pro",
+      "staticScore": 31,
+      "benchScore": 68.0,
+      "quadrant": "low-low",
+      "topRules": [
+        "no-examples",
+        "frontmatter-name-mismatch",
+        "tools-as-string-not-array"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 18,
+      "agentName": "ml-engineer",
+      "staticScore": 54,
+      "benchScore": 67.5,
+      "quadrant": "low-low",
+      "topRules": [
+        "no-exit-criteria",
+        "no-examples",
+        "tools-as-string-not-array"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 0.0,
+        "null-deref": 1.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 19,
+      "agentName": "golang-pro",
+      "staticScore": 52,
+      "benchScore": 66.7,
+      "quadrant": "low-low",
+      "topRules": [
+        "tool-overreach",
+        "no-examples",
+        "tools-as-string-not-array"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 0.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 20,
+      "agentName": "graphql-architect",
+      "staticScore": 52,
+      "benchScore": 66.7,
+      "quadrant": "low-low",
+      "topRules": [
+        "tool-overreach",
+        "role-play-bloat",
+        "no-examples"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 0.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 1.0,
+        "memory-leak": 1.0,
+        "null-deref": 0.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 21,
+      "agentName": "mobile-developer",
+      "staticScore": 52,
+      "benchScore": 66.7,
+      "quadrant": "low-low",
+      "topRules": [
+        "no-examples",
+        "tools-as-string-not-array",
+        "verbosity-encouraged"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 0.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 22,
+      "agentName": "performance-engineer",
+      "staticScore": 48,
+      "benchScore": 65.2,
+      "quadrant": "low-low",
+      "topRules": [
+        "no-exit-criteria",
+        "no-examples",
+        "tools-as-string-not-array"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 0.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 23,
+      "agentName": "ava-expert",
+      "staticScore": 88,
+      "benchScore": 62.5,
+      "quadrant": "high-low",
+      "topRules": [
+        "no-examples",
+        "description-uses-cliche",
+        "missing-input-preconditions"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 0.0,
+        "n-plus-one": 1.0,
+        "race-condition": 0.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 1.0,
+        "flaky-test": 0.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 0.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    },
+    {
+      "rank": 24,
+      "agentName": "electron-pro",
+      "staticScore": 41,
+      "benchScore": 57.9,
+      "quadrant": "low-low",
+      "topRules": [
+        "no-examples",
+        "frontmatter-name-mismatch",
+        "tools-as-string-not-array"
+      ],
+      "taskPassRate": {
+        "accidentally-quadratic": 1.0,
+        "interest-off-by-one": 1.0,
+        "n-plus-one": 1.0,
+        "race-condition": 1.0,
+        "sql-injection": 1.0,
+        "cache-stampede": 0.0,
+        "flaky-test": 1.0,
+        "js-date-utc-roundtrip": 0.0,
+        "memory-leak": 1.0,
+        "null-deref": 0.0,
+        "oom": 1.0,
+        "timeout": 1.0
+      }
+    }
+  ]
+}

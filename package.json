@@ -1,0 +1,90 @@
+{
+  "name": "agelin",
+  "version": "0.1.0",
+  "description": "Quality scorer & benchmark harness for Claude Code subagents (\".claude/agents/*.md\"). Like ESLint, but it tells you if the subagent actually works.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "agelin": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./rules": {
+      "types": "./dist/rules/index.d.ts",
+      "import": "./dist/rules/index.js"
+    },
+    "./parser": {
+      "types": "./dist/parser/parse.d.ts",
+      "import": "./dist/parser/parse.js"
+    },
+    "./scoring": {
+      "types": "./dist/scoring/index.d.ts",
+      "import": "./dist/scoring/index.js"
+    },
+    "./reporters": {
+      "types": "./dist/reporters/index.d.ts",
+      "import": "./dist/reporters/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "templates",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prebuild": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
+    "dev": "bun run ./src/cli.ts",
+    "test": "bun test",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "node ./scripts/prepublish.cjs",
+    "verify:publish": "npx bun test tests/publish-readiness.test.ts",
+    "fetch-targets": "bun run scripts/fetch-leaderboard-targets.ts",
+    "build:leaderboard": "bun run scripts/build-leaderboard-html.ts",
+    "docs:rules": "bun run scripts/build-rules-doc.ts"
+  },
+  "keywords": [
+    "claude-code",
+    "subagent",
+    "linter",
+    "benchmark",
+    "ai-agents",
+    "anthropic",
+    "claude",
+    "agents",
+    "quality"
+  ],
+  "author": "AKazaconoks <a.kazaconoks@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AKazaconoks/agelin.git"
+  },
+  "homepage": "https://github.com/AKazaconoks/agelin#readme",
+  "bugs": {
+    "url": "https://github.com/AKazaconoks/agelin/issues"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "gray-matter": "^4.0.3",
+    "kleur": "^4.1.5",
+    "yaml": "^2.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

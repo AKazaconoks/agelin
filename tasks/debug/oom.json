@@ -1,0 +1,37 @@
+{
+  "id": "oom",
+  "category": "debug",
+  "title": "Diagnose unexplained pod restarts under traffic",
+  "prompt": "Our `api-server` pod has been restarting unexpectedly during peak traffic for the past two days. The pod has a memory limit of 2Gi, and it usually idles around 800MB. There are no recent code deploys. Here's the dmesg snippet from the worker node around the last restart — some lines have been redacted because the operator pasted only the parts they thought were relevant:\n\n```\n[Sun Apr 19 14:32:01 2026] api-server invoked [REDACTED]: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0\n[Sun Apr 19 14:32:01 2026] CPU: 3 PID: 28475 Comm: api-server\n[Sun Apr 19 14:32:01 2026] Memory cgroup [REDACTED]: Killed process 28475 (api-server) total-vm:3284812kB, anon-rss:2097148kB\n[Sun Apr 19 14:32:01 2026] reaped process 28475 (api-server), now anon-rss:0kB\n```\n\nWhat happened, what likely caused it (give your top hypotheses), and what concrete next steps should the on-call engineer take to diagnose and remediate? Be specific about what you'd measure or change first.",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "\\boom\\b", "flags": "i" },
+          { "kind": "regex", "pattern": "out\\s+of\\s+memory", "flags": "i" },
+          { "kind": "regex", "pattern": "memory\\s+(limit|cgroup|cap)", "flags": "i" },
+          { "kind": "regex", "pattern": "exceed(ed|ing)?\\s+(the\\s+)?(memory|limit|2\\s?gi)", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "memory\\s+leak", "flags": "i" },
+          { "kind": "regex", "pattern": "(profile|profiling|heap\\s+(dump|profile|snapshot))", "flags": "i" },
+          { "kind": "regex", "pattern": "(raise|increase|bump)\\s+(the\\s+)?(memory\\s+)?limit", "flags": "i" },
+          { "kind": "regex", "pattern": "(rss|working\\s+set|allocation)\\s+(growth|grew|growing|trend)", "flags": "i" },
+          { "kind": "regex", "pattern": "(connection|cache|buffer)\\s+pool(ing)?", "flags": "i" },
+          { "kind": "regex", "pattern": "(load|traffic|request)\\s+(spike|surge|burst)", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": {
+    "maxTokens": 8000,
+    "maxCostUsd": 0.10,
+    "maxDurationSec": 180,
+    "maxToolCalls": 10
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "n-plus-one",
+  "category": "code-review",
+  "title": "Catch N+1 query pattern in a Django ORM loop",
+  "prompt": "Review `views.py` for performance problems. Focus on database access patterns.",
+  "fixtures": {
+    "views.py": "from django.shortcuts import render\nfrom .models import Order, Customer\n\n\ndef recent_orders(request):\n    orders = Order.objects.filter(status='paid').order_by('-created_at')[:50]\n    rows = []\n    for order in orders:\n        # For each order we look up the customer name and the line items.\n        customer = Customer.objects.get(id=order.customer_id)\n        item_count = order.lineitem_set.count()\n        rows.append({\n            'id': order.id,\n            'customer_name': customer.full_name,\n            'item_count': item_count,\n            'total': order.total,\n        })\n    return render(request, 'orders/recent.html', {'rows': rows})\n"
+  },
+  "assertion": {
+    "kind": "any-of",
+    "assertions": [
+      { "kind": "regex", "pattern": "n\\s*\\+\\s*1", "flags": "i" },
+      { "kind": "regex", "pattern": "n\\s+plus\\s+one", "flags": "i" },
+      { "kind": "contains", "needle": "select_related", "caseSensitive": false },
+      { "kind": "contains", "needle": "prefetch_related", "caseSensitive": false }
+    ]
+  },
+  "budget": {
+    "maxTokens": 8000,
+    "maxCostUsd": 0.10,
+    "maxDurationSec": 90,
+    "maxToolCalls": 10
+  }
+}

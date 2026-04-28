@@ -1,0 +1,23 @@
+{
+  "id": "sql-injection",
+  "category": "code-review",
+  "title": "Spot SQL injection in PHP query string concatenation",
+  "prompt": "Review the file `vulnerable.php` for security issues. Walk through the code and call out anything that could be exploited.",
+  "fixtures": {
+    "vulnerable.php": "<?php\n// Simple user lookup endpoint.\nrequire_once 'db.php';\n\nfunction connect() {\n    return new mysqli('localhost', 'app', 'app', 'shop');\n}\n\nfunction lookup_user($username) {\n    $db = connect();\n    $sql = \"SELECT id, email, role FROM users WHERE username = '\" . $username . \"'\";\n    $result = $db->query($sql);\n    if (!$result) {\n        return null;\n    }\n    return $result->fetch_assoc();\n}\n\nfunction render($user) {\n    if ($user === null) {\n        echo 'no such user';\n        return;\n    }\n    echo 'Hello ' . $user['email'];\n}\n\n$username = $_GET['u'] ?? '';\n$user = lookup_user($username);\nrender($user);\n"
+  },
+  "assertion": {
+    "kind": "any-of",
+    "assertions": [
+      { "kind": "regex", "pattern": "sql\\s*injection", "flags": "i" },
+      { "kind": "regex", "pattern": "\\bsqli\\b", "flags": "i" },
+      { "kind": "regex", "pattern": "(prepared\\s+statement|parameterized\\s+quer|bind\\s+param)", "flags": "i" }
+    ]
+  },
+  "budget": {
+    "maxTokens": 8000,
+    "maxCostUsd": 0.10,
+    "maxDurationSec": 120,
+    "maxToolCalls": 10
+  }
+}
