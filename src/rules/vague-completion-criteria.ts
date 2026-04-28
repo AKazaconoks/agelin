@@ -14,10 +14,13 @@ import type { Rule, Issue } from "../types.js";
  */
 
 const VAGUE_EXIT_PATTERNS: { re: RegExp; label: string }[] = [
-  { re: /\b(when|once)\s+you(?:'re|\s+are)\s+done\b/i, label: "when you're done" },
+  { re: /\b(when|once)\s+you(?:['\u2019]re|\s+are)\s+done\b/i, label: "when you're done" },
   { re: /\buntil\s+(?:you\s+are\s+)?satisfied\b/i, label: "until satisfied" },
+  { re: /\buntil\s+complete\b/i, label: "until complete" },
   { re: /\bas\s+needed\b/i, label: "as needed" },
+  { re: /\bas\s+required\b/i, label: "as required" },
   { re: /\b(?:stop|exit|return|complete|finish)\s+(?:as\s+)?appropriate(?:ly)?\b/i, label: "stop appropriately" },
+  { re: /\b(?:stop|exit|return|complete|finish)\s+(?:the\s+\w+\s+)?properly\b/i, label: "complete properly" },
   { re: /\b(?:stop|exit|return|complete|finish)\s+when\s+(?:it|you)\s+(?:feels|seems|looks)\b/i, label: "stop when it feels right" },
 ];
 

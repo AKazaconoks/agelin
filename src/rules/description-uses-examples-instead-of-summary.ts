@@ -15,7 +15,7 @@ import type { Rule, Issue } from "../types.js";
  */
 
 const EXAMPLE_TAG = /<example\b[^>]*>[\s\S]*?<\/example>/gi;
-const EXAMPLE_LEAD = /^(?:e\.g\.|example\s*:)/i;
+const EXAMPLE_LEAD = /^(?:e\.g\.|example\s*:|for\s+example,)/i;
 
 const rule: Rule = {
   id: "description-uses-examples-instead-of-summary",
