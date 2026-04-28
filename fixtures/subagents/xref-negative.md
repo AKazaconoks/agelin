@@ -21,7 +21,17 @@ short review.
 
 ## Output
 
-Return a Markdown summary with one section per finding.
+Return a Markdown summary with one section per finding. The summary helper
+follows the JSDoc convention below; tags like `@param` and `@returns` are
+NOT cross-agent references and must not be flagged by xref-detection.
+
+```ts
+/**
+ * @param diff   The unified diff to review.
+ * @returns      A markdown report.
+ * @throws       When the diff is unparseable.
+ */
+```
 
 ## Exit criteria
 
