@@ -1,53 +1,62 @@
 /**
- * Verifies `printRules()` writes every registered rule to stdout in the
- * documented `<id>  [<severity>]  <description>` format.
+ * Verifies `agelin --rules` strictly:
+ *   - exits 0
+ *   - prints exactly one line per registered rule
+ *   - each line matches `<id>  [<severity>]  <description>` with two-space gutters
+ *   - lines are sorted by id (alphabetical)
+ *
+ * Spawns the real CLI via `npx tsx src/cli.ts --rules` so the parseArgs
+ * wiring is covered. Looser shape coverage lives in tests/smoke-cli.test.ts.
  */
 
-import { describe, expect, test } from "bun:test";
-import { printRules } from "../src/cli/rules.js";
+import { beforeAll, describe, expect, test } from "bun:test";
+import { spawnSync } from "node:child_process";
 import { ALL_RULES } from "../src/rules/index.js";
 
-function captureStdout(fn: () => void): string {
-  const original = console.log;
-  const lines: string[] = [];
-  console.log = (...args: unknown[]) => {
-    lines.push(args.map((a) => String(a)).join(" "));
+const LINE_RE = /^([a-z][a-z0-9-]*)  \[(error|warning|suggestion)\]  (.+)$/;
+
+let result: { code: number; stdout: string; stderr: string };
+
+beforeAll(() => {
+  // Spawn once and reuse — each `npx tsx` cold-start is ~1-2s.
+  const out = spawnSync("npx", ["tsx", "src/cli.ts", "--rules"], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+    shell: true,
+  });
+  result = {
+    code: out.status ?? -1,
+    stdout: out.stdout ?? "",
+    stderr: out.stderr ?? "",
   };
-  try {
-    fn();
-  } finally {
-    console.log = original;
-  }
-  return lines.join("\n");
-}
+});
 
-describe("printRules", () => {
-  test("output contains every registered rule id", () => {
-    const output = captureStdout(() => printRules());
-    for (const rule of ALL_RULES) {
-      expect(output).toContain(rule.id);
-    }
-  });
-
-  test("each line is `<id>  [<severity>]  <description>`", () => {
-    const output = captureStdout(() => printRules());
-    const lines = output.split("\n");
+describe("agelin --rules", () => {
+  test("exits 0 and prints one line per registered rule", () => {
+    expect(result.code).toBe(0);
+    const lines = result.stdout.split(/\r?\n/).filter((l) => l.length > 0);
     expect(lines.length).toBe(ALL_RULES.length);
+  });
+
+  test("each line has format `<id>  [<severity>]  <description>` with two-space gutters", () => {
+    const lines = result.stdout.split(/\r?\n/).filter((l) => l.length > 0);
     for (const line of lines) {
-      // matches: id (kebab-case) + spaces + [severity] + spaces + description
-      expect(line).toMatch(
-        /^[a-z][a-z0-9-]*\s+\[(error|warning|suggestion)\]\s+\S/,
-      );
+      expect(line).toMatch(LINE_RE);
     }
   });
 
-  test("rules are sorted by id", () => {
-    const output = captureStdout(() => printRules());
-    const ids = output
-      .split("\n")
-      .map((l) => l.split(/\s+/)[0])
-      .filter((s): s is string => Boolean(s));
+  test("lines are sorted by id", () => {
+    const ids = result.stdout
+      .split(/\r?\n/)
+      .filter((l) => l.length > 0)
+      .map((l) => l.split("  ")[0]!);
     const sorted = [...ids].sort((a, b) => a.localeCompare(b));
     expect(ids).toEqual(sorted);
+  });
+
+  test("output covers every rule in ALL_RULES", () => {
+    for (const rule of ALL_RULES) {
+      expect(result.stdout).toContain(rule.id);
+    }
   });
 });

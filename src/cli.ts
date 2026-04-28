@@ -103,12 +103,14 @@ async function main() {
     allowPositionals: true,
   });
 
-  const failOn = parseFailOn(values["fail-on"]);
-
+  // `--rules` short-circuits before any other action — printing the
+  // registry must not require a path arg or trigger linter setup.
   if (values.rules === true) {
     printRules();
     process.exit(0);
   }
+
+  const failOn = parseFailOn(values["fail-on"]);
 
   const targetPath = positionals[0] ?? ".claude/agents/";
 
