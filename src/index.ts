@@ -48,7 +48,11 @@ export type {
 export type { MarkdownAST } from "./parser/markdown.js";
 
 // ---------- parser ---------------------------------------------------------
-export { parseSubagent, parseSubagentDir } from "./parser/parse.js";
+export {
+  parseSubagent,
+  parseSubagentDir,
+  parseSubagentFromString,
+} from "./parser/parse.js";
 export { tokenizeMarkdown } from "./parser/markdown.js";
 
 // ---------- rules ----------------------------------------------------------
@@ -132,4 +136,4 @@ export async function lint(
 }
 
 /** Current package version. Bumped at release time. */
-export const VERSION = "0.3.0";
+export const VERSION = "0.4.0";

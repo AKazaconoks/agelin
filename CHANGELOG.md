@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-04-28
+
+Adoption surface: an in-browser playground anyone can try without
+installing.
+
+### Added
+- **Browser playground** at
+  https://akazaconoks.github.io/agelin/playground.html . Paste a
+  subagent, get a 0–100 score and a per-issue list with severity tags,
+  line numbers, and fix-it advice — all running client-side. Same 34
+  rules, same scoring, same parser as the CLI. Zero data leaves the
+  browser.
+- **`parseSubagentFromString(raw, displayPath?)`** — new public API
+  entry point that parses a subagent from an in-memory string. The
+  playground uses it; editor extensions and other library consumers
+  that already have the markdown loaded can use it too. The existing
+  `parseSubagent(filePath)` now delegates to this function after
+  reading the file.
+- **`npm run playground:build`** — bundles
+  `src/playground/entry.ts` + transitively-imported parser/rules/scoring
+  via `bun build` to a single ~100 KB ESM module at
+  `site/playground.bundle.js`. Re-run before each release if rules
+  changed; commit the bundle (the GitHub Pages deploy is a static-files
+  copy with no Node runtime).
+- **`.github/workflows/pages.yml`** — auto-deploys `site/` to GitHub
+  Pages on every push to `main`. One-time setup the repo owner does
+  once: Settings → Pages → Source: GitHub Actions.
+- **`site/index.html` link to the playground** + the hero stat for
+  static rules updated to 34 (was a stale 15).
+
+### Changed
+- README links to the playground from the Quickstart section.
+
 ## [0.3.0] — 2026-04-28
 
 CI integration depth + editor integration. The four 0.x.x releases up

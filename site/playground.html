@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>agelin playground — score a Claude Code subagent in your browser</title>
+    <meta
+      name="description"
+      content="Paste a Claude Code subagent (.claude/agents/*.md). Get a 0-100 quality score and a per-issue fix-it list, computed entirely in your browser by the same 34 rules the agelin CLI ships."
+    />
+    <link rel="canonical" href="https://akazaconoks.github.io/agelin/playground.html" />
+    <style>
+      :root {
+        --fg: #0b0d10;
+        --fg-muted: #5b6470;
+        --fg-subtle: #8a93a0;
+        --bg: #ffffff;
+        --bg-soft: #f6f7f9;
+        --border: #e6e8ec;
+        --accent: #0a64f0;
+        --accent-soft: #eaf1ff;
+        --green: #1a7f37;
+        --green-bg: #dafbe1;
+        --yellow: #9a6700;
+        --yellow-bg: #fff8c5;
+        --red: #cf222e;
+        --red-bg: #ffebe9;
+        --blue: #0969da;
+        --blue-bg: #ddf4ff;
+        --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+          "Liberation Mono", monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: var(--sans);
+        color: var(--fg);
+        background: var(--bg);
+        line-height: 1.5;
+      }
+
+      header {
+        border-bottom: 1px solid var(--border);
+        background: var(--bg);
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+      header .brand { font-weight: 700; font-size: 18px; }
+      header .brand-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        background: var(--accent);
+        border-radius: 50%;
+        margin-right: 8px;
+        vertical-align: 2px;
+      }
+      header nav { margin-left: auto; display: flex; gap: 20px; }
+      header nav a {
+        color: var(--fg-muted);
+        text-decoration: none;
+        font-size: 14px;
+      }
+      header nav a:hover { color: var(--accent); }
+
+      main {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 24px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        min-height: calc(100vh - 65px);
+      }
+
+      .pane {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
+      }
+      .pane h2 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--fg-muted);
+      }
+      .pane h2 .hint {
+        margin-left: 8px;
+        font-weight: 400;
+        text-transform: none;
+        letter-spacing: 0;
+        color: var(--fg-subtle);
+      }
+
+      #editor {
+        flex: 1;
+        min-height: 480px;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.55;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg-soft);
+        color: var(--fg);
+        resize: vertical;
+        tab-size: 2;
+        outline: none;
+      }
+      #editor:focus {
+        border-color: var(--accent);
+        background: var(--bg);
+      }
+
+      #report {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 480px;
+      }
+
+      .scorecard {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 16px;
+        align-items: center;
+      }
+      .scorecard .score {
+        font-size: 48px;
+        font-weight: 700;
+        line-height: 1;
+        font-family: var(--mono);
+        font-variant-numeric: tabular-nums;
+        min-width: 80px;
+        text-align: center;
+      }
+      .scorecard .score.good { color: var(--green); }
+      .scorecard .score.warn { color: var(--yellow); }
+      .scorecard .score.bad  { color: var(--red); }
+
+      .scorecard .meta { font-size: 14px; color: var(--fg-muted); }
+      .scorecard .meta .agent-name {
+        font-weight: 600;
+        color: var(--fg);
+        font-family: var(--mono);
+        font-size: 13px;
+      }
+
+      .totals { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+      .totals .pill {
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-family: var(--mono);
+        font-variant-numeric: tabular-nums;
+      }
+      .pill.error      { background: var(--red-bg);    color: var(--red); }
+      .pill.warning    { background: var(--yellow-bg); color: var(--yellow); }
+      .pill.suggestion { background: var(--blue-bg);   color: var(--blue); }
+      .pill.zero       { background: var(--bg-soft);   color: var(--fg-subtle); }
+
+      .issues {
+        flex: 1;
+        overflow-y: auto;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 4px;
+        background: var(--bg);
+      }
+      .issues.empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--fg-subtle);
+        font-size: 14px;
+        padding: 32px 16px;
+        text-align: center;
+      }
+
+      .issue {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 10px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+        align-items: start;
+      }
+      .issue:last-child { border-bottom: none; }
+      .issue .sev {
+        font-size: 11px;
+        font-family: var(--mono);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 2px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+        margin-top: 1px;
+      }
+      .issue .sev.error      { background: var(--red-bg);    color: var(--red); }
+      .issue .sev.warning    { background: var(--yellow-bg); color: var(--yellow); }
+      .issue .sev.suggestion { background: var(--blue-bg);   color: var(--blue); }
+
+      .issue .body { font-size: 13px; min-width: 0; }
+      .issue .rule {
+        font-family: var(--mono);
+        font-weight: 600;
+        font-size: 12px;
+        color: var(--fg);
+      }
+      .issue .line {
+        margin-left: 6px;
+        color: var(--fg-subtle);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+      .issue .msg { margin-top: 2px; color: var(--fg); }
+      .issue .fix {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--fg-muted);
+        background: var(--bg-soft);
+        padding: 6px 8px;
+        border-radius: 4px;
+        border-left: 2px solid var(--border);
+      }
+      .issue .fix strong {
+        color: var(--fg);
+        font-weight: 600;
+      }
+
+      .footer-note {
+        text-align: center;
+        font-size: 12px;
+        color: var(--fg-subtle);
+        margin-top: 16px;
+      }
+
+      @media (max-width: 880px) {
+        main { grid-template-columns: 1fr; }
+        #editor, #report { min-height: 320px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="brand"><span class="brand-dot"></span>agelin playground</span>
+      <nav>
+        <a href="./index.html">Home</a>
+        <a href="https://github.com/AKazaconoks/agelin">GitHub</a>
+        <a href="https://www.npmjs.com/package/agelin">npm</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="pane">
+        <h2>Subagent source <span class="hint">paste a `.claude/agents/*.md` file</span></h2>
+        <textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+      </section>
+
+      <section class="pane">
+        <h2>Lint report <span class="hint">all 34 rules, in your browser</span></h2>
+        <div id="report">
+          <div class="scorecard">
+            <div class="score" id="score">—</div>
+            <div class="meta">
+              <div>
+                <span id="agent-name" class="agent-name">no input</span>
+              </div>
+              <div class="totals" id="totals"></div>
+            </div>
+          </div>
+          <div class="issues empty" id="issues">
+            Paste a subagent on the left to see its score and per-rule findings.
+          </div>
+        </div>
+        <p class="footer-note">
+          Same 34 rules as <code>npx agelin check</code>. No data leaves your
+          browser; the lint runs entirely client-side.
+        </p>
+      </section>
+    </main>
+
+    <script type="module">
+      import "./playground.bundle.js";
+
+      // Sample agent for first-time visitors. Picked to fire several
+      // rules so the playground demonstrates value immediately.
+      const SAMPLE = `---
+name: react-reviewer
+description: World-class React engineer specializing in performance and idioms.
+tools:
+  - Read
+  - Edit
+  - Bash
+---
+
+You are an expert in React 18+, hooks, and the entire ecosystem.
+
+When the user provides a component, do the following:
+
+$ARGUMENTS
+
+You should be Comprehensive and produce detailed analysis. Try again
+if the first attempt isn't good enough.
+`;
+
+      const editor = document.getElementById("editor");
+      const scoreEl = document.getElementById("score");
+      const nameEl = document.getElementById("agent-name");
+      const totalsEl = document.getElementById("totals");
+      const issuesEl = document.getElementById("issues");
+
+      function escapeHtml(s) {
+        return s
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      function scoreClass(score) {
+        if (score >= 80) return "good";
+        if (score >= 50) return "warn";
+        return "bad";
+      }
+
+      function pill(label, count, sev) {
+        const cls = count === 0 ? "zero" : sev;
+        return `<span class="pill ${cls}">${label}: ${count}</span>`;
+      }
+
+      function renderTotals(totals) {
+        return [
+          pill("errors", totals.error, "error"),
+          pill("warnings", totals.warning, "warning"),
+          pill("suggestions", totals.suggestion, "suggestion"),
+        ].join("");
+      }
+
+      function renderIssues(issues) {
+        if (issues.length === 0) {
+          issuesEl.classList.add("empty");
+          issuesEl.innerHTML = "No issues. The agent passes every rule.";
+          return;
+        }
+        issuesEl.classList.remove("empty");
+        const html = issues
+          .map((issue) => {
+            const lineSuffix =
+              typeof issue.line === "number"
+                ? `<span class="line">line ${issue.line}</span>`
+                : "";
+            const fixHtml = issue.fix
+              ? `<div class="fix"><strong>Fix:</strong> ${escapeHtml(issue.fix)}</div>`
+              : "";
+            return `
+              <div class="issue">
+                <div class="sev ${issue.severity}">${issue.severity}</div>
+                <div class="body">
+                  <div><span class="rule">${escapeHtml(issue.ruleId)}</span>${lineSuffix}</div>
+                  <div class="msg">${escapeHtml(issue.message)}</div>
+                  ${fixHtml}
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+        issuesEl.innerHTML = html;
+      }
+
+      function lint() {
+        const raw = editor.value;
+        if (!raw.trim()) {
+          scoreEl.textContent = "—";
+          scoreEl.className = "score";
+          nameEl.textContent = "no input";
+          totalsEl.innerHTML = "";
+          issuesEl.classList.add("empty");
+          issuesEl.innerHTML =
+            "Paste a subagent on the left to see its score and per-rule findings.";
+          return;
+        }
+        try {
+          const result = window.agelin.lintPlayground(raw);
+          scoreEl.textContent = Math.round(result.score);
+          scoreEl.className = `score ${scoreClass(result.score)}`;
+          nameEl.textContent = result.agentName;
+          totalsEl.innerHTML = renderTotals(result.totals);
+          renderIssues(result.issues);
+        } catch (err) {
+          scoreEl.textContent = "?";
+          scoreEl.className = "score bad";
+          issuesEl.classList.add("empty");
+          issuesEl.innerHTML = `Playground error: ${escapeHtml(String(err))}`;
+        }
+      }
+
+      // Debounce on input — typing fast shouldn't fire 30 lints/sec.
+      let pending = null;
+      editor.addEventListener("input", () => {
+        if (pending) clearTimeout(pending);
+        pending = setTimeout(lint, 120);
+      });
+
+      editor.value = SAMPLE;
+      lint();
+    </script>
+  </body>
+</html>

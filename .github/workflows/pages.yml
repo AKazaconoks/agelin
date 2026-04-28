@@ -1,0 +1,65 @@
+# Deploys the `site/` directory to GitHub Pages on every push to main.
+#
+# This workflow uses GitHub's "deploy from Actions" mode (NOT the older
+# "deploy from branch" mode). One-time setup the repo owner has to do:
+#   Repo → Settings → Pages → Build and deployment → Source: GitHub Actions.
+# After that, this workflow runs automatically.
+#
+# What ships:
+#   - site/index.html              (landing page + leaderboard)
+#   - site/playground.html         (browser playground)
+#   - site/playground.bundle.js    (the agelin lint engine, ~100 KB)
+#   - site/leaderboard.json        (data for the landing-page leaderboard)
+#   - site/badges/*                (sample SVG badges)
+#   - site/README.md               (purely descriptive; not user-facing)
+#
+# The bundle is checked into git on `main` so this workflow is a pure
+# static-files copy with no Node runtime — no `npm install`, no build
+# step, fast deploys (<30s typical). Run `npm run playground:build`
+# locally before committing if you change the lint engine and want
+# the playground to pick it up.
+
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+# GitHub Pages requires these scopes when using the deploy-from-Actions mode.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Pages doesn't allow concurrent deploys; cancel an in-flight run if a
+# newer commit lands.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy site/ to Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site/ as Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4

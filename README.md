@@ -26,6 +26,9 @@ npx agelin bench ./.claude/agents/
 npx agelin baseline --targets=./targets
 ```
 
+Or **try the browser playground** — paste an agent, see its score and per-issue fix-its, no install required:
+[https://akazaconoks.github.io/agelin/playground.html](https://akazaconoks.github.io/agelin/playground.html). Runs the same 34 rules client-side; nothing leaves your browser.
+
 ## What you get
 
 **Frontmatter hygiene.** Rules that flag the subagents that simply will not load: missing `description`, name/filename mismatch, comma-separated `tools` strings instead of YAML arrays, references to retired Claude model IDs. In our scan of 97 popular public subagents, **14% failed basic frontmatter parsing** — the names show up as `(unnamed)` because the parser dies before reaching `name`.

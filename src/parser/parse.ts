@@ -98,25 +98,39 @@ function normalizeFrontmatter(
 
 export function parseSubagent(filePath: string): ParsedSubagent {
   const absPath = resolve(filePath);
-  const parseErrors: string[] = [];
-
   let raw = "";
   try {
     raw = readFileSync(absPath, "utf8");
   } catch (err) {
-    parseErrors.push(
-      `unable to read file: ${err instanceof Error ? err.message : String(err)}`,
-    );
     return {
       path: absPath,
       raw: "",
       frontmatter: { name: "", description: "" },
       body: "",
       bodyTokens: 0,
-      parseErrors,
+      parseErrors: [
+        `unable to read file: ${err instanceof Error ? err.message : String(err)}`,
+      ],
     };
   }
+  return parseSubagentFromString(raw, absPath);
+}
 
+/**
+ * Parse a subagent from an in-memory string — no filesystem access.
+ *
+ * Used by the browser playground (which has no `node:fs`) and by
+ * library consumers who already have the markdown loaded in memory
+ * (e.g., editor extensions that lint the active document buffer).
+ *
+ * The `displayPath` is used for `ParsedSubagent.path` and surfaces in
+ * issue messages; it does not have to exist on disk.
+ */
+export function parseSubagentFromString(
+  raw: string,
+  displayPath = "<input>.md",
+): ParsedSubagent {
+  const parseErrors: string[] = [];
   let data: Record<string, unknown> = {};
   let body = "";
   let yamlFailed = false;
@@ -137,7 +151,7 @@ export function parseSubagent(filePath: string): ParsedSubagent {
   const frontmatter = normalizeFrontmatter(data, parseErrors, yamlFailed);
 
   return {
-    path: absPath,
+    path: displayPath,
     raw,
     frontmatter,
     body,
