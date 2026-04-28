@@ -36,3 +36,9 @@ STATUS.md
 QUESTIONS-FOR-USER.md
 calibration/cycles/
 launch/wild-population-static-scan.json
+
+# VS Code extension build artifacts. The .vsix is produced by
+# `editor/vscode/npm run package`; treat it like a build output, not source.
+editor/vscode/out/
+editor/vscode/*.vsix
+editor/vscode/node_modules/

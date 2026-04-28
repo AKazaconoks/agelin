@@ -1,0 +1,70 @@
+{
+  "name": "agelin-vscode",
+  "displayName": "agelin — Claude Code subagent linter",
+  "description": "Inline diagnostics for Claude Code subagents (.claude/agents/*.md). 34 quality rules; same engine as the agelin CLI.",
+  "version": "0.1.1",
+  "publisher": "akazaconoks",
+  "license": "MIT",
+  "homepage": "https://github.com/AKazaconoks/agelin/tree/main/editor/vscode",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AKazaconoks/agelin.git",
+    "directory": "editor/vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/AKazaconoks/agelin/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters"
+  ],
+  "keywords": [
+    "claude-code",
+    "subagent",
+    "linter",
+    "ai-agents",
+    "anthropic"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
+  "contributes": {
+    "configuration": {
+      "title": "agelin",
+      "properties": {
+        "agelin.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether agelin lints subagent files at all."
+        },
+        "agelin.glob": {
+          "type": ["array", "string"],
+          "items": { "type": "string" },
+          "default": [
+            "**/.claude/agents/**/*.md",
+            "**/*.agent.md"
+          ],
+          "description": "Glob pattern(s) that decide which markdown files agelin lints. Defaults cover the standard Claude Code layout (`.claude/agents/`) plus the cross-ecosystem `.agent.md` convention. Pass an array for multiple patterns; a single string is also accepted for backward compatibility."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "npx tsc -p .",
+    "build": "npx bun run scripts/bundle.ts",
+    "package": "npx vsce package",
+    "vscode:prepublish": "npm run build"
+  },
+  "dependencies": {
+    "agelin": "^0.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.6.0"
+  }
+}

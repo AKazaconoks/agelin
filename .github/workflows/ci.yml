@@ -1,14 +1,16 @@
 # CI for agelin itself: typecheck, unit tests, smoke-run the CLI
 # against fixtures (which intentionally contain bad subagents — non-zero
-# exit is expected and tolerated).
+# exit is expected and tolerated). Also typechecks the VS Code extension
+# under editor/vscode/ so an agelin API change that would break the
+# extension surfaces here, not after marketplace publish.
 
 name: ci
 
 on:
   push:
-    branches: [master]
+    branches: [main, master]
   pull_request:
-    branches: [master]
+    branches: [main, master]
 
 permissions:
   contents: read
@@ -54,3 +56,18 @@ jobs:
       - name: CLI smoke (allowed to fail — fixtures contain bad subagents)
         continue-on-error: true
         run: npx tsx src/cli.ts check ./fixtures/subagents/
+
+      # The VS Code extension lives in its own sub-project with its own
+      # package.json + node_modules. Install + typecheck here so a
+      # breaking change in agelin's public API can't slip past CI.
+      - name: VS Code extension — install
+        working-directory: editor/vscode
+        run: npm install --no-audit --no-fund
+
+      - name: VS Code extension — typecheck
+        working-directory: editor/vscode
+        run: npx tsc -p . --noEmit
+
+      - name: VS Code extension — bundle (smoke)
+        working-directory: editor/vscode
+        run: npm run build

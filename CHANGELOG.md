@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added — VS Code extension (separate marketplace publish, 0.1.x)
+- New sub-project under `editor/vscode/`: a Visual Studio Code
+  extension (`agelin-vscode`) that lints subagent markdown files on
+  open / edit / save and surfaces every issue as an inline diagnostic
+  with severity, line, message, and fix-it on hover.
+- Bundled with `bun build` into a single 108 KB CommonJS file —
+  marketplace `.vsix` weighs **43 KB**. No install-time deps once
+  published; agelin is inlined.
+- Honors `agelin.config.json` from the workspace root (presets,
+  per-rule severity overrides, plugins).
+- Two settings: `agelin.enable` (default `true`) and `agelin.glob`
+  (defaults to `**/.claude/agents/**/*.md` + `**/*.agent.md`,
+  accepts an array of patterns or a single string).
+- CI now typechecks + bundles the extension on every push so a
+  breaking agelin API change can't slip past pre-marketplace.
+- Marketplace publish is a one-time manual step by the maintainer
+  (`vsce login akazaconoks` + `npm run package` + `vsce publish`).
+
+#### 0.1.1 (post-real-world testing)
+- **Wider default glob.** 0.1.0's strict `**/.claude/agents/**/*.md`
+  meant users opening an `.agent.md` from Downloads or a folder
+  outside the standard Claude Code layout saw nothing. 0.1.1 lints
+  any of: `**/.claude/agents/**/*.md` OR `**/*.agent.md`.
+- **`agelin.glob` accepts string OR array of strings.** Legacy
+  string form still normalises at runtime; array form is preferred
+  for multi-pattern configs.
+
 ## [0.4.0] — 2026-04-28
 
 Adoption surface: an in-browser playground anyone can try without

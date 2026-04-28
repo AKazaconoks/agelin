@@ -1,0 +1,17 @@
+# Files NOT shipped in the .vsix tarball.
+# Extension consumers only need the bundled `out/extension.js` and the
+# package metadata; everything else is dev-time clutter.
+
+.vscode/**
+.vscode-test/**
+src/**
+.gitignore
+.eslintrc.json
+.yarnrc
+**/tsconfig.json
+**/.eslintrc.json
+**/*.map
+**/*.ts
+**/*.tsbuildinfo
+node_modules/**
+scripts/**
