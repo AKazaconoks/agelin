@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-04-28
+
+CI integration depth + editor integration. The four 0.x.x releases up
+to here covered authoring + reading agents; this one covers the rest of
+where agelin needs to live: native GitHub PR annotations, GitHub Code
+Scanning, and editor autocomplete on `agelin.config.json`.
+
+### Added
+- **`--format=github` reporter.** Emits GitHub Actions workflow
+  commands (`::warning file=…,line=…::`) so each issue renders as a
+  native PR-review annotation — the inline red/yellow/blue squigglies
+  on the diff. Severity maps as `error → ::error::`,
+  `warning → ::warning::`, `suggestion → ::notice::`. Paths are
+  repo-relative with forward slashes regardless of platform; messages
+  and properties URL-encode `%`/`\r`/`\n`/`,`/`:` per GitHub's spec.
+- **`--format=sarif` reporter.** Emits a SARIF v2.1.0 document for
+  upload to **GitHub Code Scanning** (Security → Code scanning alerts)
+  or any other SARIF consumer (Sonar, GitLab SAST, etc.). The output
+  declares all 34 rules in `tool.driver.rules[]` so consumers know
+  about rules even before any of them fires; results carry stable
+  `partialFingerprints` so GitHub dedupes alerts across re-runs.
+- **JSON Schema for `agelin.config.json`.** Generated from the live
+  rule registry by `npm run schema:gen` and shipped as
+  `schema/agelin.config.json`. Stable URL via JSDelivr's npm proxy:
+  https://cdn.jsdelivr.net/npm/agelin@latest/schema/agelin.config.json .
+  `agelin init` now scaffolds a config file with the `$schema`
+  reference at the top — VS Code / Cursor / IntelliJ get autocomplete
+  + inline validation for free.
+- **Updated `.github/workflows/agelin.yml`** — drops in a workflow
+  that gives users three layers of visibility on every PR:
+  1. PR annotations (per-issue squigglies on the diff)
+  2. Sticky comment with the leaderboard + score deltas
+  3. Optional SARIF upload to Code Scanning (commented out by default)
+
+### Changed
+- **README rewrite of the bench-backend section.** Pre-0.3.0 the
+  framing was Max-plan-centric and read as if Pro users were excluded
+  and other LLMs were possible. Both wrong: the `claude-code` backend
+  works on Claude **Pro or Max** (anyone whose `claude` CLI
+  authenticates), the `api` backend works on **any** Anthropic API
+  account, and **non-Anthropic models are not supported today**
+  (~3-5 days of integration work per family; on the roadmap).
+- **README "Sample output" section** shows both the multi-agent
+  summary and the single-agent verbose layout.
+- Workflow file renamed `subagent-lint.yml` → `agelin.yml` to match
+  the package name. Anyone using the old reusable-workflow URL needs
+  to update their `uses:` reference.
+
+### Tests
+- 17 new tests across `reporter-github.test.ts` (9) and
+  `reporter-sarif.test.ts` (8). Total now 295+ passing across 41 files.
+
+### Deferred to 0.3.1
+- **gray-matter → `yaml` migration** — fixes the parser-state bug we
+  found in 0.2.2 (after one YAML failure, subsequent malformed
+  inputs silently return empty data within the same process). Doesn't
+  affect production behaviour (each `agelin check` is one process)
+  and migrating risks cosmetic diff churn on `agelin fix` outputs, so
+  we deferred. Not visible to users; cleaner internals when it lands.
+- **VS Code extension** — biggest remaining adoption lever. Separate
+  repo, marketplace publish, and shape of LSP integration. Sprint 4.
+- **Multi-LLM bench backend** (OpenAI / Gemini / local) — real
+  product feature, ~3-5 days per family. Roadmap, not urgent.
+
 ## [0.2.2] — 2026-04-28
 
 Two rule-audit passes folded into one release: a user-feedback pass on

@@ -38,25 +38,29 @@ npx agelin baseline --targets=./targets
 
 Across the 97-agent baseline, the mean score landed at **65.9 / 100** — median 68, range 5 to 94. Plenty of room to move.
 
-## Two ways to run `bench`
+## `check` is free; `bench` is the optional dynamic eval
 
-`agelin bench` exercises each subagent against a golden task suite. Two backends:
+The 34-rule **static analyzer** (`agelin check`) needs zero LLM. No API key, no CLI subscription — it runs against the markdown directly. That's where ~95% of the value is and what every CI integration uses by default.
 
-| Backend         | Bills against             | Requires                              | Flag                    |
-| --------------- | ------------------------- | ------------------------------------- | ----------------------- |
-| `api`           | Anthropic API console     | `ANTHROPIC_API_KEY` env var           | `--backend=api`         |
-| `claude-code`   | Your Claude Code Max plan | `claude` CLI on PATH + a Max plan     | `--backend=claude-code` |
+The optional **dynamic benchmark** (`agelin bench`) actually runs each subagent against a golden task suite. Two backends:
 
-The default `--backend=auto` prefers `claude-code` when the `claude` CLI is available and `ANTHROPIC_API_KEY` is missing — anyone with a Max subscription can run the benchmarks for free.
+| Backend       | Compatible with                              | Requires                                          | Flag                    |
+| ------------- | -------------------------------------------- | ------------------------------------------------- | ----------------------- |
+| `api`         | Any Anthropic API account (Build / Scale / Enterprise / pay-as-you-go) | `ANTHROPIC_API_KEY` env var      | `--backend=api`         |
+| `claude-code` | Claude Pro **or** Claude Max subscription    | `claude` CLI on PATH (authenticated)              | `--backend=claude-code` |
+
+The default `--backend=auto` prefers `claude-code` when the `claude` CLI is on PATH and `ANTHROPIC_API_KEY` is missing — anyone with a Pro or Max subscription can run the benchmarks at no per-token cost.
 
 ```bash
-# Free (Max plan): routes through your local `claude` CLI
+# Flat-rate (Pro or Max): routes through your local `claude` CLI
 npx agelin bench ./.claude/agents/ --backend=claude-code
 
-# Paid (API key): direct Messages API
+# Pay-per-token (API): direct Messages API
 export ANTHROPIC_API_KEY=sk-ant-...
-npx agelin bench ./.claude/agents/ --backend=api
+npx agelin bench ./.claude/agents/ --backend=api --model=claude-sonnet-4-6
 ```
+
+**Non-Anthropic models** (OpenAI / Gemini / local Ollama) are **not supported today**. The `Backend` interface in `src/eval/backends/index.ts` is shaped for swap-in implementations, but each model family needs ~3-5 days of work to translate its tool-use loop, pricing table, and retry semantics. On the roadmap; not in 0.x.
 
 The `claude-code` backend has two trade-offs vs. the API backend: spawned tool calls execute with Claude Code's real permissions (not our tmpdir sandbox), and per-tool-call counts aren't exposed by `claude -p --output-format json` yet — so `tool-called` / `no-tool-called` assertions are unreliable there. See `src/eval/backends/claude-code.ts` for the full list.
 

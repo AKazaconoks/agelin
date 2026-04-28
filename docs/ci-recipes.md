@@ -37,6 +37,61 @@ To fail on warnings too: `--fail-on=warning`.
 
 ---
 
+## GitHub Actions: native PR-review annotations
+
+Render each issue as an inline annotation on the PR diff (the
+red/yellow/blue squigglies you'd get from any "real" linter). Use
+`--format=github` — it emits `::warning file=…,line=…::` workflow
+commands that GitHub Actions parses on the fly.
+
+```yaml
+- name: Lint subagents
+  run: npx agelin check ./.claude/agents/ --format=github --fail-on=none
+- name: Severity gate
+  run: npx agelin check ./.claude/agents/ --fail-on=error
+```
+
+The first step always succeeds (`--fail-on=none`) so all issues are
+annotated regardless of severity. The second step is the actual gate.
+
+The full drop-in workflow at `.github/workflows/agelin.yml` in this repo
+combines annotations + a sticky comment with the leaderboard + an
+optional SARIF upload to GitHub Code Scanning. Copy it as-is or call
+it as a reusable workflow:
+
+```yaml
+jobs:
+  quality:
+    uses: AKazaconoks/agelin/.github/workflows/agelin.yml@main
+    with:
+      fail-on: warning
+```
+
+---
+
+## GitHub Code Scanning (SARIF)
+
+Upload findings to the **Security → Code scanning alerts** tab. Each
+issue becomes a tracked alert with rule metadata, fingerprints for
+deduplication, and history across runs.
+
+```yaml
+- name: Lint subagents (SARIF)
+  run: npx agelin check ./.claude/agents/ --format=sarif --fail-on=none > agelin.sarif
+
+- name: Upload SARIF
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: agelin.sarif
+    category: agelin
+```
+
+Requires `permissions: { security-events: write }` on the job. The
+SARIF output also feeds into Sonar / GitLab SAST / any tool that
+consumes SARIF v2.1.0.
+
+---
+
 ## GitHub Actions: PR-comment with score deltas
 
 Use the `diff` command to compare PR scores against `main`'s baseline.

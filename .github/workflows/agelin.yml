@@ -1,13 +1,17 @@
 # agelin — drop-in PR quality gate for Claude Code subagents.
 #
 # Drop this file in your repo at .github/workflows/agelin.yml. PRs that
-# touch `.claude/agents/**/*.md` will get a sticky comment with a quality
-# report and a score delta against the base branch.
+# touch `.claude/agents/**/*.md` will get:
+#   - **Inline annotations** on the PR diff (red/yellow/blue squigglies)
+#     pointing at each issue with its message and fix-it.
+#   - A **sticky comment** with a leaderboard + score deltas vs base.
+#   - (Optional) **Code Scanning alerts** under the Security tab via
+#     SARIF upload — see the commented-out step below.
 #
-# This workflow can be used in two ways:
+# Two ways to use this file:
 #
 #   1. Direct (default) — copy this file as-is. The pull_request trigger
-#      runs it with default settings (`fail-on: error`).
+#      runs it with `fail-on: error`.
 #
 #   2. Reusable — call it from another workflow to override the severity
 #      gate:
@@ -21,7 +25,7 @@
 # Severity gates:
 #   error    (default) — fail the check on any error-severity issue
 #   warning  — fail on warnings or worse
-#   none     — never fail; comment only
+#   none     — never fail; comment + annotate only
 
 name: agelin
 
@@ -40,6 +44,8 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  # Required only if you uncomment the SARIF-upload step below.
+  security-events: write
 
 jobs:
   lint:
@@ -57,14 +63,37 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: Lint head (PR)
+      # The annotation step writes `::warning file=…,line=…::` to stdout
+      # which GitHub Actions parses on the fly. The `continue-on-error`
+      # is intentional — annotations should always render, even if the
+      # severity gate later fails the check.
+      - name: Lint head — emit PR annotations
+        continue-on-error: true
+        run: npx --yes agelin check --format=github --fail-on=none ./.claude/agents/
+
+      - name: Lint head — capture markdown + json for the sticky comment
         id: head
         continue-on-error: true
         run: |
           set +e
-          npx --yes agelin check --format=markdown ./.claude/agents/ > head.md
-          echo "exit=$?" >> "$GITHUB_OUTPUT"
-          npx --yes agelin check --format=json ./.claude/agents/ > head.json || true
+          npx --yes agelin check --format=markdown --fail-on=none ./.claude/agents/ > head.md
+          npx --yes agelin check --format=json --fail-on=none ./.claude/agents/ > head.json
+
+      # Optional: SARIF upload for the Security → Code scanning tab.
+      # Uncomment if you want findings to live there too. Code Scanning
+      # is a separate UI from PR annotations and gives you a longer
+      # alert history + per-rule trend graphs.
+      #
+      # - name: Lint head — SARIF
+      #   if: always()
+      #   run: npx --yes agelin check --format=sarif --fail-on=none ./.claude/agents/ > agelin.sarif
+      #
+      # - name: Upload SARIF to Code Scanning
+      #   if: always()
+      #   uses: github/codeql-action/upload-sarif@v3
+      #   with:
+      #     sarif_file: agelin.sarif
+      #     category: agelin
 
       - name: Checkout base branch
         run: |
@@ -77,7 +106,7 @@ jobs:
         working-directory: ../base
         run: |
           if [ -d ./.claude/agents ]; then
-            npx --yes agelin check --format=json ./.claude/agents/ > "$GITHUB_WORKSPACE/base.json" || true
+            npx --yes agelin check --format=json --fail-on=none ./.claude/agents/ > "$GITHUB_WORKSPACE/base.json"
           else
             echo '{"results": []}' > "$GITHUB_WORKSPACE/base.json"
           fi
@@ -136,6 +165,8 @@ jobs:
             const body = [
               marker,
               '## agelin report',
+              '',
+              'Inline annotations are on the PR diff above.',
               '',
               tableLines.join('\n'),
               '',

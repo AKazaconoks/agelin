@@ -10,11 +10,13 @@ import type { Reporter } from "../types.js";
 import consoleReporter from "./console.js";
 import jsonReporter from "./json.js";
 import markdownReporter from "./markdown.js";
+import githubReporter from "./github.js";
+import sarifReporter from "./sarif.js";
 
 const htmlStub: Reporter = {
   name: "html",
   render(): string {
-    return "HTML reporter coming soon — pass --format=console, json, or markdown for now.";
+    return "HTML reporter coming soon — pass --format=console, json, markdown, github, or sarif for now.";
   },
 };
 
@@ -23,6 +25,8 @@ const REPORTERS: Record<string, Reporter> = {
   json: jsonReporter,
   markdown: markdownReporter,
   html: htmlStub,
+  github: githubReporter,
+  sarif: sarifReporter,
 };
 
 export function getReporter(name: string): Reporter {

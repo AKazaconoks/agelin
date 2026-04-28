@@ -1,6 +1,6 @@
 {
   "name": "agelin",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Quality scorer & benchmark harness for Claude Code subagents (\".claude/agents/*.md\"). Like ESLint, but it tells you if the subagent actually works.",
   "type": "module",
   "main": "./dist/index.js",
@@ -34,6 +34,7 @@
   "files": [
     "dist",
     "templates",
+    "schema",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"
@@ -48,7 +49,8 @@
     "verify:publish": "npx bun test tests/publish-readiness.test.ts",
     "fetch-targets": "bun run scripts/fetch-leaderboard-targets.ts",
     "build:leaderboard": "bun run scripts/build-leaderboard-html.ts",
-    "docs:rules": "bun run scripts/build-rules-doc.ts"
+    "docs:rules": "bun run scripts/build-rules-doc.ts",
+    "schema:gen": "npx tsx scripts/generate-config-schema.ts"
   },
   "keywords": [
     "claude-code",

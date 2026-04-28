@@ -178,7 +178,7 @@ export interface ReportContext {
 }
 
 export interface Reporter {
-  name: "console" | "json" | "html" | "markdown";
+  name: "console" | "json" | "html" | "markdown" | "github" | "sarif";
   render(ctx: ReportContext): string;
 }
 

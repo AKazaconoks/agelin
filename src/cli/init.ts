@@ -30,6 +30,13 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
   return scaffoldConfig();
 }
 
+/** JSDelivr serves any file from a published npm package on a stable
+ *  URL. Editors that read `$schema` (VS Code, Cursor, IntelliJ) will
+ *  fetch this once and cache it. The schema is regenerated from the
+ *  rule registry at release time and included in the npm tarball. */
+const SCHEMA_URL =
+  "https://cdn.jsdelivr.net/npm/agelin@latest/schema/agelin.config.json";
+
 function scaffoldConfig(): void {
   const target = resolve(process.cwd(), CONFIG_FILENAME);
 
@@ -40,9 +47,19 @@ function scaffoldConfig(): void {
     process.exit(1);
   }
 
-  const body = JSON.stringify(DEFAULT_CONFIG, null, 2) + "\n";
+  // The `$schema` key sits at the top of the file; every editor expects
+  // it there. Spread DEFAULT_CONFIG after it so its keys appear in their
+  // logical order in the emitted JSON.
+  const seeded = {
+    $schema: SCHEMA_URL,
+    ...DEFAULT_CONFIG,
+  };
+  const body = JSON.stringify(seeded, null, 2) + "\n";
   writeFileSync(target, body, "utf8");
   console.log(`Created ${CONFIG_FILENAME}`);
+  console.log(
+    "  → Includes a `$schema` reference; VS Code / Cursor / IntelliJ will autocomplete + validate the file.",
+  );
 }
 
 function scaffoldTemplate(name: string): void {
