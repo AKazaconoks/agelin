@@ -24,26 +24,41 @@ function mkSubagent(opts: Partial<ParsedSubagent> & { body: string; frontmatter?
   };
 }
 
+// A long body without an output-shape signal — > 1200 tokens.
+// Each repetition is ~80 chars / ~20 tokens; 70 reps ~= 1400 tokens.
+const LONG_BODY_NO_SHAPE =
+  "Analyze the situation thoroughly. Be exhaustive. Cover everything carefully. ".repeat(
+    70,
+  );
+
 describe("undefined-output-shape", () => {
-  test("fires when neither a heading nor a shape paragraph is present", () => {
-    const sa = mkSubagent({
-      body: "Analyze the situation thoroughly. Be exhaustive. Cover everything.",
-    });
+  test("fires when body is long (>1200 tokens) and lacks shape signal", () => {
+    const sa = mkSubagent({ body: LONG_BODY_NO_SHAPE });
     const issues = rule.check(sa);
     expect(issues.length).toBe(1);
     expect(issues[0].ruleId).toBe("undefined-output-shape");
   });
 
-  test("does not fire when an `## Output` heading exists (heading-based)", () => {
+  test("does NOT fire on a short body (<=1200 tokens), even without shape signal — added in 0.5.0 per phase-2 case study", () => {
     const sa = mkSubagent({
-      body: "Some preamble.\n\n## Output\n\nA markdown report.",
+      body: "Analyze the situation thoroughly. Be exhaustive. Cover everything.",
+    });
+    const issues = rule.check(sa);
+    expect(issues).toEqual([]);
+  });
+
+  test("does not fire when an `## Output` heading exists (heading-based, long body)", () => {
+    const sa = mkSubagent({
+      body: LONG_BODY_NO_SHAPE + "\n\n## Output\n\nA markdown report.",
     });
     expect(rule.check(sa)).toEqual([]);
   });
 
-  test("does not fire when a paragraph names a concrete shape (paragraph-based)", () => {
+  test("does not fire when a paragraph names a concrete shape (paragraph-based, long body)", () => {
     const sa = mkSubagent({
-      body: "Inspect the diff. Return a JSON object with fields: issues, summary, score.",
+      body:
+        LONG_BODY_NO_SHAPE +
+        "\nInspect the diff. Return a JSON object with fields: issues, summary, score.",
     });
     expect(rule.check(sa)).toEqual([]);
   });

@@ -7,6 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-04-29
+
+Rule-design refinement driven by the **phase-2 case study**
+([`agelin-case-study` repo](https://github.com/AKazaconoks/agelin-case-study)
+— 20 wild Claude Code subagents × 5 domain-matched StackOverflow questions
+each, before/after agelin's lint+fix). Phase-2 produced a **+14.92%
+combined lift** (judge total +4.14%, mean wall time -10.78%, gate was
++7%) but surfaced four agent regressions, one of which (`node-specialist`,
+combined -16.1%) traced to agelin itself: the lint+fix loop *inflated*
+the agent's body from 4.3 KB → 7.4 KB by mandating sections the agent
+didn't need.
+
+### Changed — token-aware skip on three structure-adding rules
+
+Three rules were tightened to **skip on already-concise agents**
+(body ≤ 1200 tokens). The mandates make sense for bloated agents but
+can over-add structure to focused, terse specialists — exactly what
+`node-specialist` got hit with in phase-2.
+
+- **`no-examples`** — minimum-tokens floor raised from **300 → 1200**.
+  Below 1200 tokens, the agent is concise; an example would only
+  inflate body length without improving consistency. The rule still
+  fires on bloated agents (>1200 tokens of prose with no example)
+  where a worked example genuinely helps.
+- **`undefined-output-shape`** — added a **1200-token floor**
+  (previously fired regardless of body size). Below the floor, the
+  agent's brevity itself signals shape; mandating an `## Output Format`
+  section adds overhead.
+- **`missing-input-preconditions`** — added a **1200-token floor**
+  (previously fired regardless of body size). Below the floor, the
+  description field already adequately states inputs.
+
+The 1200-token threshold is an empirically-tuned middle ground:
+phase-2's `node-specialist` was 1100 tokens before lint+fix and
+inflated to ~1900 after. The new threshold preserves the rules' value
+on bloated agents while letting concise specialists keep their tightness.
+
+### Added
+- Per-rule unit-test coverage for the new threshold behavior:
+  `tests/rule-no-examples.test.ts` (new), and updated cases in
+  `tests/rule-undefined-output-shape.test.ts` and
+  `tests/rule-missing-input-preconditions.test.ts`. 305 total tests
+  pass on the full suite (was 298).
+
+### Migration
+
+For most users, this is silent — short agents that no longer fire
+these three rules were probably already at score 100 because they had
+the explicit-trigger description and other structure. If a tight
+agent's score went *up* in 0.5.0, that's the new threshold removing
+spurious firings. If you want the prior behavior, set the floor back
+in your `agelin.config.json`:
+
+```json
+{ "ruleOptions": { "no-examples": { "minTokens": 300 } } }
+```
+
+(Note: ruleOptions is a forward-compat hook; current 0.5.0 uses the
+hardcoded 1200 threshold. Custom thresholds will land in 0.5.x.)
+
 ## [0.4.1] — 2026-04-29
 
 Public case study + automation template + LLM-as-judge layer. The big

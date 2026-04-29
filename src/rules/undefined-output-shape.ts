@@ -11,9 +11,18 @@ import type { Rule, Issue } from "../types.js";
  * ## Deliverable, ...) or a body paragraph that names a concrete shape
  * ("Return a JSON object ...", "Provide a markdown report ...").
  *
+ * **0.5.0 change:** added a 1200-token floor. Phase-2 case study found that
+ * mandating an explicit Output-Format section on already-concise agents
+ * (`node-specialist` was 1100 tokens before lint+fix) inflated response
+ * length without improving quality. Below the floor, the agent's brevity
+ * IS its output shape; the rule is silent. Above 1200 tokens, the rule
+ * still fires — bloated agents benefit from explicit shape guidance.
+ *
  * TODO(integration): when Unit 1 lands, replace the inline heading parser
  * with `subagent.ast.sections` / `subagent.ast.prose`.
  */
+
+const MIN_TOKENS_TO_REQUIRE_OUTPUT_SHAPE = 1200;
 
 const HEADING_RE = /^(#{1,4})\s+(.+?)\s*$/gm;
 const SHAPE_HEADING_RE =
@@ -36,10 +45,11 @@ const rule: Rule = {
   id: "undefined-output-shape",
   defaultSeverity: "warning",
   description:
-    "Body never specifies the shape of the deliverable (JSON / markdown / list / report). Different runs will guess differently and produce inconsistent output.",
+    "Body never specifies the shape of the deliverable (JSON / markdown / list / report). Skipped when body is concise (<1200 tokens). Different runs will otherwise guess differently and produce inconsistent output.",
   check(subagent) {
     const body = subagent.body;
     if (!body.trim()) return [];
+    if (subagent.bodyTokens <= MIN_TOKENS_TO_REQUIRE_OUTPUT_SHAPE) return [];
 
     if (hasOutputHeading(body)) return [];
     if (SHAPE_PARAGRAPH_RE.test(body)) return [];

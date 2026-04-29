@@ -6,9 +6,18 @@ import type { Rule, Issue } from "../types.js";
  * `## Preconditions`) section, or includes a sentence like "You will be given
  * a stack trace and the relevant source file."
  *
+ * **0.5.0 change:** added a 1200-token floor. Phase-2 case study found that
+ * mandating an `## Inputs` section on already-concise agents
+ * (`node-specialist` was 1100 tokens before lint+fix) inflated body length
+ * without improving consistency. Below the floor, the agent's description
+ * field already adequately states inputs; the body section is overhead.
+ * Above 1200 tokens, the rule still fires.
+ *
  * TODO(integration): when Unit 1 lands, replace the inline heading parser
  * with `subagent.ast.sections` / `subagent.ast.prose`.
  */
+
+const MIN_TOKENS_TO_REQUIRE_INPUT_SECTION = 1200;
 
 const HEADING_RE = /^(#{1,4})\s+(.+?)\s*$/gm;
 const INPUT_HEADING_RE =
@@ -39,10 +48,11 @@ const rule: Rule = {
   id: "missing-input-preconditions",
   defaultSeverity: "suggestion",
   description:
-    "Body never states what inputs/state the agent expects. Callers cannot tell what to pass in.",
+    "Body never states what inputs/state the agent expects. Skipped when body is concise (<1200 tokens). Otherwise callers cannot tell what to pass in.",
   check(subagent) {
     const body = subagent.body;
     if (!body.trim()) return [];
+    if (subagent.bodyTokens <= MIN_TOKENS_TO_REQUIRE_INPUT_SECTION) return [];
 
     if (hasInputHeading(body)) return [];
     if (INPUT_PHRASES.some((p) => p.test(body))) return [];
