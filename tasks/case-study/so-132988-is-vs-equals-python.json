@@ -1,0 +1,36 @@
+{
+  "id": "so-132988-is-vs-equals-python",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/132988/is-there-a-difference-between-and-is-in-python",
+  "title": "Is there a difference between `==` and `is` in Python?",
+  "prompt": "My Google-fu has failed me. In Python, are these two tests for equality equivalent?\n\n```python\nn = 5\n\n# Test 1\nif n == 5:\n    print 'Yay!'\n\n# Test 2\nif n is 5:\n    print 'Yay!'\n```\n\nDoes this hold true for objects where you would be comparing instances (a `list` say)?\n\n```python\nL = []\nL.append(1)\nif L == [1]:\n    print 'Yay!'\n# Holds true, but...\n\nif L is [1]:\n    print 'Yay!'\n# Doesn't.\n```\n\nWhy and when do they diverge? When should I use which?",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "==\\s+(checks|compares|tests)\\s+(for\\s+)?(value\\s+)?equality", "flags": "i" },
+          { "kind": "regex", "pattern": "equality\\s+operator", "flags": "i" },
+          { "kind": "regex", "pattern": "(values?|contents?)\\s+(are\\s+)?equal", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(is\\s+(checks|compares|tests)\\s+)?(for\\s+)?identity", "flags": "i" },
+          { "kind": "regex", "pattern": "(same|identical)\\s+object\\s+(in\\s+memory)?", "flags": "i" },
+          { "kind": "regex", "pattern": "(point\\s+to|reference)\\s+the\\s+same\\s+object", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "is\\s+None", "flags": "" },
+          { "kind": "regex", "pattern": "(use\\s+is\\s+(only\\s+)?(for|with)\\s+None|None\\s+(is\\s+a\\s+)?singleton)", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3000, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "so-419163-name-equals-main",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/419163/what-does-if-name-main-do",
+  "title": "What does `if __name__ == \"__main__\":` do?",
+  "prompt": "Given the following code:\n\n```python\nif __name__ == \"__main__\":\n    print(\"Hello, World!\")\n```\n\nWhat does this `if` statement do? Why is it there? When is `__name__` equal to `\"__main__\"` and when isn't it? What's the practical reason a Python module would include this check at the bottom of the file?",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(run|executed|invoked|called)\\s+(directly|as\\s+(a\\s+)?script|from\\s+(the\\s+)?command\\s+line)", "flags": "i" },
+          { "kind": "regex", "pattern": "python\\s+\\S+\\.py", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(import(ed|ing)|from\\s+\\w+\\s+import)", "flags": "i" },
+          { "kind": "regex", "pattern": "(when\\s+(it\\s+is\\s+)?imported|imported\\s+as\\s+(a\\s+)?module)", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "__name__\\s+(is\\s+set\\s+to|equals?|becomes?)\\s+(['\"]?__main__['\"]?|the\\s+module(\\s+name)?)", "flags": "i" },
+          { "kind": "regex", "pattern": "(set\\s+to\\s+)?(['\"]?__main__['\"]?|module(\\s+name)?\\s+as\\s+a\\s+string)", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3000, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}

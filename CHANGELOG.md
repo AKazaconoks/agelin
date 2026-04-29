@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-04-29
+
+Public case study + automation template + LLM-as-judge layer. The big
+change is shipped data under `case-study/`, not new agelin features.
+
+### Added
+- **`case-study/`** — full reproducible benchmark of agelin's effect on
+  3 popular community subagents (`bash-expert` from 0xfurai,
+  `full-stack-developer` and `electron-pro` from lst97) against 20
+  high-vote StackOverflow questions, verbatim. 360 total bench calls
+  (180 before + 180 after, 3 repeats each), claude-code backend.
+  Headline numbers: static score mean 67.3 → 100, bench timeouts
+  −37%, strict pass rate +5%, loose-semantic pass rate ~tied,
+  LLM-judge total ~tied (96.06 → 95.97), mean wall time per cell
+  −7.84% (51.7 s → 47.6 s). Full per-agent and per-task breakdown in
+  `case-study/README.md`. Every raw bench result is checked in
+  (`case-study/results/before.json`, `case-study/results/after.json`).
+- **`tasks/case-study/*.json`** — the 20 task fixtures, each citing
+  its source SO URL and anchoring its assertion to the accepted
+  answer's central concept(s). Pass/fail is deterministic regex; the
+  LLM-judge layer (below) is a separate axis.
+- **`templates/subagent-enhancer.md`** — a Claude Code subagent that
+  automates the case-study workflow on any subagent file. Lints with
+  `agelin check`, applies `agelin fix`, applies the judgment-based
+  fixes per each rule's `fix:` advice, re-lints, reports before/after.
+  Stops at 3 attempts if it can't reach a static score of 90.
+- **`templates/answer-judge.md`** — a Sonnet-4.6 grader subagent that
+  scores answers on 5 dimensions (correctness 25 / clarity 20 /
+  completeness 20 / conciseness 15 / technical-accuracy 20 = 100)
+  with calibration anchors and JSON-only output discipline. Drives
+  the LLM-as-judge layer of the case study; re-usable for anyone
+  benchmarking subagent answer quality.
+- **`case-study/judge.ts`** — driver that stages `answer-judge.md`,
+  fans out judge calls (configurable parallelism + repeats via env
+  vars, RESUME mode for quota-recovery), parses the JSON grade out
+  of the CLI reply, and aggregates to `case-study/results/judge.json`
+  with median across repeats.
+- **`case-study/rescore-loose.py`** — post-hoc semantic re-score of
+  the bench JSONs. Surfaces honestly that the strict regex
+  assertions miss valid answers when the agent uses different
+  markdown formatting, and that the case study's real signal is
+  *speed* (mean wall time, timeouts) rather than *correctness*
+  (the wild agents already understand these concepts at ~96/100).
+
+### Changed
+- Main README now headlines the case-study numbers + links to the
+  full data.
+
 ### Added — VS Code extension (separate marketplace publish, 0.1.x)
 - New sub-project under `editor/vscode/`: a Visual Studio Code
   extension (`agelin-vscode`) that lints subagent markdown files on

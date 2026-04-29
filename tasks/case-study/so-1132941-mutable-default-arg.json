@@ -1,0 +1,29 @@
+{
+  "id": "so-1132941-mutable-default-arg",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/1132941/least-astonishment-and-the-mutable-default-argument",
+  "title": "\"Least Astonishment\" and the Mutable Default Argument",
+  "prompt": "Anyone tinkering with Python long enough has been bitten (or torn to pieces) by the following issue:\n\n```python\ndef foo(a=[]):\n    a.append(5)\n    return a\n```\n\nPython novices would expect this function to always return a list with only one element: `[5]`. The result is instead very different, and very astonishing (for a novice):\n\n```\n>>> foo()\n[5]\n>>> foo()\n[5, 5]\n>>> foo()\n[5, 5, 5]\n>>> foo()\n[5, 5, 5, 5]\n>>> foo()\n```\n\nWhy is this happening? Explain the underlying behavior of Python that causes it, and what the idiomatic fix is.",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(default\\s+(value|argument)s?\\s+(are|is)\\s+(only\\s+)?(evaluated|created|constructed)\\s+once)", "flags": "i" },
+          { "kind": "regex", "pattern": "(evaluated\\s+(only\\s+)?once|created\\s+(only\\s+)?once|once\\s+at\\s+(function\\s+)?(definition|def))", "flags": "i" },
+          { "kind": "regex", "pattern": "(shared|same)\\s+(across|between)\\s+(calls|invocations)", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "a\\s*=\\s*None", "flags": "" },
+          { "kind": "regex", "pattern": "(use|with)\\s+None\\s+(as\\s+(the\\s+)?default|sentinel)", "flags": "i" },
+          { "kind": "regex", "pattern": "if\\s+a\\s+is\\s+None", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3500, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}

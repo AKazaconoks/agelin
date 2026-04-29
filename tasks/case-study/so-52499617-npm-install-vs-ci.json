@@ -1,0 +1,36 @@
+{
+  "id": "so-52499617-npm-install-vs-ci",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/52499617/what-is-the-difference-between-npm-install-and-npm-ci",
+  "title": "What is the difference between `npm install` and `npm ci`?",
+  "prompt": "I'm working on continuous integration, and I noticed there is a `npm ci` command. I'm not able to find the benefits of using this command for my CI workflow. Is it faster? Does it make tests harder, sure?\n\nWhat is the difference between `npm install` and `npm ci`? When should I use which?",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "package[- ]?lock\\.json", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "npm\\s+ci\\s+(is\\s+)?strict", "flags": "i" },
+          { "kind": "regex", "pattern": "(strict|exact)\\s+(install|version|match)", "flags": "i" },
+          { "kind": "regex", "pattern": "(does\\s+not\\s+(modify|update|change)\\s+(the\\s+)?(lock|package-lock))", "flags": "i" },
+          { "kind": "regex", "pattern": "(deletes|removes|wipes|clean)\\s+node_modules", "flags": "i" },
+          { "kind": "regex", "pattern": "(throws?\\s+(an?\\s+)?error|fails?)\\s+(if|when)\\s+(the\\s+)?(lock|package[- ]?lock)", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(use\\s+)?npm\\s+ci\\s+(in|for)\\s+(ci|continuous\\s+integration|production|build)", "flags": "i" },
+          { "kind": "regex", "pattern": "(reproducib(le|ility)|deterministic|consistent)", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3000, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}

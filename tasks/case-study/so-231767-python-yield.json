@@ -1,0 +1,36 @@
+{
+  "id": "so-231767-python-yield",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python",
+  "title": "What does the \"yield\" keyword do in Python?",
+  "prompt": "What is the use of the `yield` keyword in Python? What does it do?\n\nFor example, I'm trying to understand this code:\n\n```python\ndef _get_child_candidates(self, distance, min_dist, max_dist):\n    if self._leftchild and distance - max_dist < self._median:\n        yield self._leftchild\n    if self._rightchild and distance + max_dist >= self._median:\n        yield self._rightchild\n```\n\nAnd this is the caller:\n\n```python\nresult, candidates = [], [self]\nwhile candidates:\n    node = candidates.pop()\n    distance = node._get_dist(obj)\n    if distance <= max_dist and distance >= min_dist:\n        result.extend(node._values)\n    candidates.extend(node._get_child_candidates(distance, min_dist, max_dist))\nreturn result\n```\n\nWhat happens when the method `_get_child_candidates` is called? Is a list returned? A single element? Is it called again? When will subsequent calls stop?\n\nExplain `yield`, what it does, and why a programmer would reach for it.",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "generator(\\s+function)?", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(lazy|on[- ]?demand|on\\s+request)", "flags": "i" },
+          { "kind": "regex", "pattern": "(pauses?|suspends?)\\s+(execution|the\\s+function)", "flags": "i" },
+          { "kind": "regex", "pattern": "(resumes?\\s+(from|where|after))", "flags": "i" },
+          { "kind": "regex", "pattern": "(produce|return)s?\\s+(values?|items?)\\s+one\\s+at\\s+a\\s+time", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "iterator", "flags": "i" },
+          { "kind": "regex", "pattern": "iterabl[ye]", "flags": "i" },
+          { "kind": "regex", "pattern": "(memory[- ]?efficient|infinite\\s+sequence)", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3500, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}

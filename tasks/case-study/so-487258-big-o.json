@@ -1,0 +1,35 @@
+{
+  "id": "so-487258-big-o",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/487258/what-is-a-plain-english-explanation-of-big-o-notation",
+  "title": "What is a plain English explanation of \"Big O\" notation?",
+  "prompt": "I'd prefer as little formal definition as possible and simple mathematics.\n\nGive me a plain-English explanation of Big O notation. What is it for? Why do programmers care? What does O(n) mean — and what's the difference between O(n) and O(n²) in practical terms?",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(worst[- ]?case|upper[- ]?bound)", "flags": "i" },
+          { "kind": "regex", "pattern": "(asymptotic|grows?\\s+(as|with))", "flags": "i" },
+          { "kind": "regex", "pattern": "(how\\s+(time|the\\s+number\\s+of\\s+operations)\\s+(grows|scales))", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(input\\s+size|size\\s+of\\s+(the\\s+)?input|n\\s+items?|n\\s+elements?)", "flags": "i" },
+          { "kind": "regex", "pattern": "(as\\s+n\\s+(grows|increases|gets\\s+larger))", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(ignore|drop|discard)\\s+(constants?|constant\\s+factors?|lower[- ]?order\\s+terms?)", "flags": "i" },
+          { "kind": "regex", "pattern": "(constant\\s+factors?\\s+(don'?t|do\\s+not)\\s+matter)", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3000, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}

@@ -1,0 +1,36 @@
+{
+  "id": "so-509211-python-slice-notation",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/509211/how-slicing-in-python-works",
+  "title": "How slicing in Python works",
+  "prompt": "How does Python's slice notation work? That is, when I write code like `a[x:y:z]`, `a[:]`, `a[::2]`, etc., how do I understand which elements end up in the slice?\n\nWalk me through the meaning of each of the three parts (start, stop, step), what happens with negative values, and what happens when one or more parts are omitted. A small worked example would help.",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "\\bstart\\b.*\\bstop\\b.*\\bstep\\b", "flags": "is" },
+          { "kind": "regex", "pattern": "(start|begin)[^\\n]{0,40}(stop|end)[^\\n]{0,40}step", "flags": "is" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(stop|end)\\s+(is\\s+)?exclusive", "flags": "i" },
+          { "kind": "regex", "pattern": "(does\\s+not\\s+include|excludes?|exclusive\\s+(of|the)\\s+(stop|end))", "flags": "i" },
+          { "kind": "regex", "pattern": "(up\\s+to\\s+but\\s+not\\s+including)", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "negative\\s+(index|indices|values?|step)", "flags": "i" },
+          { "kind": "regex", "pattern": "(reversed?|backwards?|from\\s+(the\\s+)?end)", "flags": "i" },
+          { "kind": "regex", "pattern": "a\\[::-1\\]", "flags": "" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3500, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}

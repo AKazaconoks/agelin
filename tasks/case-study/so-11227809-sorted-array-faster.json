@@ -1,0 +1,28 @@
+{
+  "id": "so-11227809-sorted-array-faster",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/11227809/why-is-processing-a-sorted-array-faster-than-processing-an-unsorted-array",
+  "title": "Why is processing a sorted array faster than processing an unsorted array?",
+  "prompt": "Here is a piece of C++ code that shows some very peculiar behaviour. For some strange reason, sorting the data (before the timed region) miraculously makes the loop almost six times faster:\n\n```cpp\n#include <algorithm>\n#include <ctime>\n#include <iostream>\n\nint main() {\n    // Generate data\n    const unsigned arraySize = 32768;\n    int data[arraySize];\n    for (unsigned c = 0; c < arraySize; ++c) data[c] = std::rand() % 256;\n\n    // !!! With this, the next loop runs faster.\n    std::sort(data, data + arraySize);\n\n    // Test\n    clock_t start = clock();\n    long long sum = 0;\n    for (unsigned i = 0; i < 100000; ++i) {\n        for (unsigned c = 0; c < arraySize; ++c) {\n            if (data[c] >= 128) sum += data[c];\n        }\n    }\n    double elapsedTime = static_cast<double>(clock() - start) / CLOCKS_PER_SEC;\n    std::cout << elapsedTime << std::endl;\n    std::cout << \"sum = \" << sum << std::endl;\n}\n```\n\nWithout `std::sort(data, data + arraySize);`, the code runs in 11.54 seconds. With sorted data, the code runs in 1.93 seconds. Initially, I thought this might be just a language or compiler anomaly, so I tried Java — same effect, just less pronounced. Why?",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "branch\\s+predict(ion|or)", "flags": "i" },
+          { "kind": "regex", "pattern": "predict(ed|ing|ion)\\s+(the\\s+)?branch", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(misprediction|mispredict|wrong\\s+predict)", "flags": "i" },
+          { "kind": "regex", "pattern": "(pipeline\\s+(flush|stall|refill)|wasted\\s+cycles)", "flags": "i" },
+          { "kind": "regex", "pattern": "(predictable\\s+pattern|consistent(ly)?\\s+(taken|not\\s+taken))", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 4000, "maxCostUsd": 0.05, "maxDurationSec": 90, "maxToolCalls": 3 }
+}

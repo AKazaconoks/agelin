@@ -136,4 +136,4 @@ export async function lint(
 }
 
 /** Current package version. Bumped at release time. */
-export const VERSION = "0.4.0";
+export const VERSION = "0.4.1";

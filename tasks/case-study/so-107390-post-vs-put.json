@@ -1,0 +1,35 @@
+{
+  "id": "so-107390-post-vs-put",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/107390/whats-the-difference-between-a-post-and-a-put-http-request",
+  "title": "What's the difference between a POST and a PUT HTTP REQUEST?",
+  "prompt": "They both seem to be sending data to the server inside the body... so what makes them different?\n\nWhich one should I use to create a new resource and which one to update an existing one? Why does it matter?",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "idempoten(t|ce|cy)", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "PUT\\s+(is\\s+)?idempotent", "flags": "i" },
+          { "kind": "regex", "pattern": "(multiple|repeated|same)\\s+PUT(\\s+requests?)?\\s+(produce|result\\s+in|leave)\\s+(the\\s+)?same\\s+(state|result|effect)", "flags": "i" },
+          { "kind": "regex", "pattern": "(safe|safer)\\s+to\\s+(retry|repeat)", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "POST\\s+(is\\s+)?(not\\s+idempotent|non[- ]?idempotent)", "flags": "i" },
+          { "kind": "regex", "pattern": "POST.*creates?\\s+(a\\s+)?new\\s+resource", "flags": "i" },
+          { "kind": "regex", "pattern": "(repeated\\s+POST|each\\s+POST)\\s+(creates?|may\\s+create)\\s+(a\\s+)?new", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3000, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}

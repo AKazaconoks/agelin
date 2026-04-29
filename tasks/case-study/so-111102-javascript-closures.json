@@ -1,0 +1,29 @@
+{
+  "id": "so-111102-javascript-closures",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/111102/how-do-javascript-closures-work",
+  "title": "How do JavaScript closures work?",
+  "prompt": "How would you explain JavaScript closures to someone with a knowledge of the concepts they consist of (functions, variables, scope, the like), but does not understand closures themselves?\n\nI have seen the Scheme example given on Wikipedia, but unfortunately it did not help.\n\nKeep your answer accessible — describe what a closure IS, what it consists of, when JavaScript creates one, and why a programmer would care. A short example is welcome but not required to be a deep dive.",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "lexical\\s+(scope|environment|context)", "flags": "i" },
+          { "kind": "regex", "pattern": "enclosing\\s+(scope|function|environment)", "flags": "i" },
+          { "kind": "regex", "pattern": "(captures?|closes\\s+over|remembers)\\s+(the\\s+)?(variables?|environment|scope)", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "inner\\s+function\\s+(returned|that\\s+(uses|references|accesses))", "flags": "i" },
+          { "kind": "regex", "pattern": "function\\s+(returned\\s+from|defined\\s+inside|that\\s+outlives)", "flags": "i" },
+          { "kind": "regex", "pattern": "after\\s+(the\\s+)?outer\\s+function\\s+(has\\s+)?(returned|finished|exited)", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3500, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}

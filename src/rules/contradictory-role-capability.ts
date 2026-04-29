@@ -1,4 +1,5 @@
 import type { Rule, Issue } from "../types.js";
+import { getToolList, isWriteTool } from "../parser/tools.js";
 
 /**
  * Stronger sibling of `tool-overreach`. Fires only when ALL three signals
@@ -11,19 +12,7 @@ import type { Rule, Issue } from "../types.js";
  * error when the body itself also instructs the agent to mutate state — the
  * three-way contradiction is almost certainly a real bug, not a stylistic
  * quibble.
- *
- * TODO(integration): replace the inlined WRITE_TOOLS set with the shared
- * helper from `../parser/tools.js` once Unit 1 lands.
  */
-
-// TODO(integration): import from `../parser/tools.js` once Unit 1 lands.
-const WRITE_TOOLS: ReadonlySet<string> = new Set([
-  "Write",
-  "Edit",
-  "MultiEdit",
-  "Bash",
-  "NotebookEdit",
-]);
 
 const ROLE_RESTRICTION_PHRASES = [
   "review only",
@@ -51,19 +40,6 @@ const ACTION_VERB_PHRASES = [
   "push",
   "execute",
 ];
-
-function getDeclaredTools(frontmatterTools: unknown): string[] {
-  if (Array.isArray(frontmatterTools)) {
-    return frontmatterTools.map((t) => String(t).trim()).filter(Boolean);
-  }
-  if (typeof frontmatterTools === "string") {
-    return frontmatterTools
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-  }
-  return [];
-}
 
 /**
  * Extract the first paragraph from the markdown body. Skips blank lines
@@ -110,8 +86,8 @@ const rule: Rule = {
     if (!restrictionMatch) return issues;
 
     // Signal 2: declared tools include a write capability.
-    const toolList = getDeclaredTools(subagent.frontmatter.tools);
-    const conflictingTools = toolList.filter((t) => WRITE_TOOLS.has(t));
+    const { tools } = getToolList(subagent);
+    const conflictingTools = tools.filter(isWriteTool);
     if (conflictingTools.length === 0) return issues;
 
     // Signal 3: body prose contains action verbs.

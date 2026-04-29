@@ -1,0 +1,35 @@
+{
+  "id": "so-200469-process-vs-thread",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/200469/what-is-the-difference-between-a-process-and-a-thread",
+  "title": "What is the difference between a process and a thread?",
+  "prompt": "What is the technical difference between a process and a thread? I get the feeling a word like 'process' is overused and there are also hardware and software threads. Explain the distinction in concrete terms — what does each own, what do they share, and why does it matter when you write code that uses them.",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "process(es)?\\s+(have\\s+)?(their\\s+own|separate|isolated)\\s+(memory|address\\s+space)", "flags": "i" },
+          { "kind": "regex", "pattern": "(separate|distinct|isolated|own)\\s+(memory|address\\s+space)", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "threads?\\s+(share|use)\\s+(the\\s+)?(memory|address\\s+space|heap)", "flags": "i" },
+          { "kind": "regex", "pattern": "(shared\\s+memory|same\\s+(memory|address\\s+space|heap))", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(own|separate)\\s+stack", "flags": "i" },
+          { "kind": "regex", "pattern": "(thread|threads)\\s+(have|has)\\s+(their\\s+)?own\\s+stack", "flags": "i" },
+          { "kind": "regex", "pattern": "(context\\s+switch|lighter|heavier|cheaper|more\\s+expensive)", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3000, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}

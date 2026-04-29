@@ -29,6 +29,25 @@ npx agelin baseline --targets=./targets
 Or **try the browser playground** — paste an agent, see its score and per-issue fix-its, no install required:
 [https://akazaconoks.github.io/agelin/playground.html](https://akazaconoks.github.io/agelin/playground.html). Runs the same 34 rules client-side; nothing leaves your browser.
 
+## Does it actually move the needle?
+
+We took **3 popular Claude Code subagents** from the wild, applied agelin's recommendations to each, and re-ran them against **20 high-vote questions pulled verbatim from StackOverflow** (3 agents × 20 tasks × 3 repeats = 180 calls per side, 360 total).
+
+Headline:
+
+| | Before | After | Δ |
+|---|---|---|---|
+| Static score (mean of 3 agents) | 67.3 | **100** | +32.7 |
+| Bench timeouts (>60–90 s) | 43 | **27** | **−37%** |
+| Mean wall time per call | 51.7 s | 47.6 s | **−7.84%** |
+| LLM-judge total (Sonnet 4.6, 5 dims, 0–100) | 96.06 | 95.97 | ~tied |
+| Strict pass rate | 52.8% | 57.8% | +5% |
+| Loose-semantic pass rate | 96.1% | 96.7% | ~tied |
+
+The honest read: agelin's fixes don't make agents *smarter* on these questions (a Sonnet-4.6 grader scores both before and after at ~96/100, the rubric's "textbook-correct" anchor). They make agents **tighter** — `verbosity-encouraged` + `description-uses-cliche` + `undefined-output-shape` cut token waste enough that the agents stop busting time budgets and respond ~8% faster on average. Two of three case-study agents got materially faster (`bash-expert` 17.6%, `electron-pro` 13.1%); one regressed on speed (`full-stack-developer` −5.3%) — full per-agent breakdown in the case-study README.
+
+Full data, every diff, every assertion: **[`case-study/README.md`](./case-study/README.md)**. To automate the same workflow on any subagent of yours, see the [`subagent-enhancer`](./templates/subagent-enhancer.md) template.
+
 ## What you get
 
 **Frontmatter hygiene.** Rules that flag the subagents that simply will not load: missing `description`, name/filename mismatch, comma-separated `tools` strings instead of YAML arrays, references to retired Claude model IDs. In our scan of 97 popular public subagents, **14% failed basic frontmatter parsing** — the names show up as `(unnamed)` because the parser dies before reaching `name`.

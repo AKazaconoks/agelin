@@ -1,0 +1,28 @@
+{
+  "id": "so-1335851-use-strict",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/1335851/what-does-use-strict-do-in-javascript-and-what-is-the-reasoning-behind-it",
+  "title": "What does \"use strict\" do in JavaScript, and what is the reasoning behind it?",
+  "prompt": "Recently, I ran some of my JavaScript code through Crockford's JSLint, and it gave the following error:\n\n> Problem at line 1 character 1: Missing \"use strict\" statement.\n\nDoing some searching, I realised that some people add `\"use strict\";` into their JavaScript code. Once I added the statement, the error stopped appearing. Unfortunately, Google did not reveal much of the history behind this string statement. Certainly it must have something to do with how the JavaScript is interpreted by the browser, but I have no idea what the effect would be.\n\nSo what is `\"use strict\"` all about, what does it imply, and is it still relevant?\n\nDo any of the current browsers respond to the `\"use strict\"` string or is it for future use? Briefly cover the main behavioural changes it triggers.",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "strict\\s+mode", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(undeclared|implicit(ly)?\\s+global|accidental(ly)?\\s+global)", "flags": "i" },
+          { "kind": "regex", "pattern": "(silent\\s+errors?|silently\\s+(fail|fails)|throws?\\s+(an\\s+)?error)", "flags": "i" },
+          { "kind": "regex", "pattern": "(this\\s+(is\\s+)?undefined|undefined\\s+instead\\s+of\\s+(global|window))", "flags": "i" },
+          { "kind": "regex", "pattern": "duplicate\\s+(parameter|param)\\s+name", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3500, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}

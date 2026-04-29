@@ -1,0 +1,27 @@
+{
+  "id": "so-1789945-string-contains-substring",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/1789945/how-to-check-whether-a-string-contains-a-substring-in-javascript",
+  "title": "How to check whether a string contains a substring in JavaScript?",
+  "prompt": "Usually I would expect a `String.contains()` method, but there doesn't seem to be one. What is a reasonable way to check for this?\n\nGive the modern, idiomatic answer in current JavaScript and the older approaches one might still see in legacy code. Brief code examples please.",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "\\.includes\\s*\\(", "flags": "" },
+          { "kind": "regex", "pattern": "String\\.prototype\\.includes", "flags": "" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "\\.indexOf\\s*\\(", "flags": "" },
+          { "kind": "regex", "pattern": "indexOf.*!==?\\s*-1|indexOf.*>=?\\s*0", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 2500, "maxCostUsd": 0.03, "maxDurationSec": 45, "maxToolCalls": 2 }
+}

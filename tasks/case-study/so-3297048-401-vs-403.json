@@ -1,0 +1,27 @@
+{
+  "id": "so-3297048-401-vs-403",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/3297048/403-forbidden-vs-401-unauthorized-http-responses",
+  "title": "403 Forbidden vs 401 Unauthorized HTTP responses",
+  "prompt": "For a web page that exists, but for which a user does not have sufficient privileges (they are not logged in or do not belong to the proper user group), which HTTP response should be served?\n\n- 401 Unauthorized?\n- 403 Forbidden?\n- Other?\n\nWhat are the characteristics of each — i.e., what does the spec say about when each is appropriate? Concretely: what's the actor model that distinguishes them?",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "401.*(authentication|authenticate|credentials|not\\s+(authenticated|logged\\s+in))", "flags": "is" },
+          { "kind": "regex", "pattern": "(missing|invalid|incorrect|no)\\s+(authentication|credentials|token|login)", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "403.*(authorization|permission|forbidden|don'?t\\s+have\\s+(access|permission)|lacks?\\s+(the\\s+)?(permission|privileges?))", "flags": "is" },
+          { "kind": "regex", "pattern": "(authenticated|logged\\s+in)\\s+but\\s+(not\\s+)?(authorized|allowed|permitted)", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 2500, "maxCostUsd": 0.03, "maxDurationSec": 45, "maxToolCalls": 2 }
+}

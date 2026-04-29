@@ -1,0 +1,34 @@
+{
+  "id": "so-114543-center-element",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/114543/how-can-i-horizontally-center-an-element",
+  "title": "How can I horizontally center an element?",
+  "prompt": "How can I horizontally center a `<div>` within another `<div>` using CSS?\n\n```html\n<div id=\"outer\">  \n    <div id=\"inner\">Foo foo</div>\n</div>\n```\n\nGive the canonical approaches that work in current browsers. Cover the modern way (flexbox) and the older block-level `margin: 0 auto` approach. Explain why each works.",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "margin\\s*:\\s*0?\\s*auto", "flags": "i" },
+          { "kind": "regex", "pattern": "margin-(left|right)\\s*:\\s*auto", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "display\\s*:\\s*flex", "flags": "i" },
+          { "kind": "regex", "pattern": "justify-content\\s*:\\s*center", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(width|max-width)\\s*:", "flags": "i" },
+          { "kind": "regex", "pattern": "(needs?\\s+a\\s+(width|fixed\\s+width|defined\\s+width))", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 2500, "maxCostUsd": 0.03, "maxDurationSec": 45, "maxToolCalls": 2 }
+}

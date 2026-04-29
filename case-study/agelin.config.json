@@ -1,0 +1,7 @@
+{
+  "$schema": "https://cdn.jsdelivr.net/npm/agelin@latest/schema/agelin.config.json",
+  "include": ["case-study/agents/before/*.md", "case-study/agents/after/*.md"],
+  "benchCategories": ["case-study"],
+  "benchRepeats": 3,
+  "benchModel": "claude-sonnet-4-6"
+}

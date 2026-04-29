@@ -1,0 +1,34 @@
+{
+  "id": "so-762011-let-vs-var",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/762011/what-is-the-difference-between-let-and-var",
+  "title": "What is the difference between \"let\" and \"var\"?",
+  "prompt": "ECMAScript 6 introduced the `let` statement. I've heard it described as a 'local' variable, but I'm still not quite sure how it behaves differently than the `var` keyword.\n\nWhat are the differences? When should `let` be used over `var`?\n\nCover the scoping rules, hoisting behaviour, and any other practical difference a working JavaScript developer should know about. Brief code examples are fine.",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "block[- ]?scoped?", "flags": "i" },
+          { "kind": "regex", "pattern": "(scope|scoped)\\s+to\\s+(the\\s+)?block", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "function[- ]?scoped?", "flags": "i" },
+          { "kind": "regex", "pattern": "(var\\s+is\\s+(scoped|scope)\\s+to|var\\s+(is\\s+)?function[- ]?scope)", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "temporal\\s+dead\\s+zone|\\btdz\\b", "flags": "i" },
+          { "kind": "regex", "pattern": "hoist(ed|ing)", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3500, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}

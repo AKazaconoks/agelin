@@ -1,0 +1,36 @@
+{
+  "id": "so-523643-equality-operators",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/523643/difference-between-and-in-javascript",
+  "title": "What is the difference between == and === in JavaScript?",
+  "prompt": "What is the difference between `==` and `===` in JavaScript? I have also seen `!=` and `!==` operators. Are there more such operators?\n\nWhich one should I prefer in everyday code, and why?",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "type\\s+coercion", "flags": "i" },
+          { "kind": "regex", "pattern": "coerc(es?|ing|ion)", "flags": "i" },
+          { "kind": "regex", "pattern": "(converts?|conversion)\\s+(the\\s+)?type", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "strict\\s+equality", "flags": "i" },
+          { "kind": "regex", "pattern": "without\\s+(type\\s+)?(coercion|conversion)", "flags": "i" },
+          { "kind": "regex", "pattern": "(both|same)\\s+(type|operands?\\s+are\\s+the\\s+same\\s+type)", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(prefer|use|always\\s+use|recommend)\\s+===", "flags": "i" },
+          { "kind": "regex", "pattern": "===\\s+(is\\s+)?(preferred|recommended|safer)", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3000, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}

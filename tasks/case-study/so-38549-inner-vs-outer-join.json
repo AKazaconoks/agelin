@@ -1,0 +1,35 @@
+{
+  "id": "so-38549-inner-vs-outer-join",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/38549/what-is-the-difference-between-inner-join-and-outer-join",
+  "title": "What is the difference between INNER JOIN and OUTER JOIN?",
+  "prompt": "What is the difference between an inner join and outer join in SQL? Cover the LEFT, RIGHT, and FULL outer join variants too. A small example with two tables would help.",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "inner\\s+join\\s+(returns|produces|yields|gives)\\s+(only\\s+)?(rows?|records?)\\s+(where|that)\\s+(match|join|exist)", "flags": "i" },
+          { "kind": "regex", "pattern": "(only|just)\\s+(matching|matched)\\s+(rows?|records?)", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "left\\s+(outer\\s+)?join.*all\\s+(rows?|records?)\\s+from\\s+(the\\s+)?left", "flags": "is" },
+          { "kind": "regex", "pattern": "all\\s+(rows?|records?)\\s+from\\s+(the\\s+)?(left|first)\\s+table", "flags": "i" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "\\bnull\\b", "flags": "i" },
+          { "kind": "regex", "pattern": "(filled|padded|replaced)\\s+with\\s+null", "flags": "i" },
+          { "kind": "regex", "pattern": "no\\s+match", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3000, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}

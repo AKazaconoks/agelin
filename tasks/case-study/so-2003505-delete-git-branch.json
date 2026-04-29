@@ -1,0 +1,34 @@
+{
+  "id": "so-2003505-delete-git-branch",
+  "category": "case-study",
+  "source_url": "https://stackoverflow.com/questions/2003505/how-do-i-delete-a-git-branch-locally-and-remotely",
+  "title": "How do I delete a Git branch locally and remotely?",
+  "prompt": "I want to delete a branch both locally and remotely.\n\n```\n$ git branch -d the_local_branch\nerror: The branch 'the_local_branch' is not fully merged.\nIf you are sure you want to delete it, run 'git branch -D the_local_branch'.\n\n$ git push origin :the_remote_branch\nerror: unable to push to unqualified destination: the_remote_branch\n```\n\nWhat am I doing wrong, and what's the correct way to delete a branch both locally and from `origin`?",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "git\\s+branch\\s+-d\\b", "flags": "" },
+          { "kind": "regex", "pattern": "git\\s+branch\\s+-D\\b", "flags": "" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "git\\s+push\\s+(--delete|-d|origin\\s+--delete)", "flags": "i" },
+          { "kind": "regex", "pattern": "git\\s+push\\s+origin\\s+(--delete|:[a-zA-Z_-])", "flags": "" }
+        ]
+      },
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "(unmerged|not\\s+fully\\s+merged|force(\\s+|-)?delete|capital\\s+d|-D\\s+(forces|forces?\\s+the\\s+delete))", "flags": "i" },
+          { "kind": "regex", "pattern": "fetch\\s+--prune|git\\s+remote\\s+prune", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxTokens": 3000, "maxCostUsd": 0.04, "maxDurationSec": 60, "maxToolCalls": 2 }
+}
