@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-04-29
+
+Build-tooling fix. **0.5.0's behavior is unchanged**; this release exists
+because `npm publish` of 0.5.0 failed on Windows due to a long-standing
+`npx tsc` resolution issue in the `prepublish` script.
+
+### Fixed
+- `scripts/prepublish.cjs` now resolves the local TypeScript via
+  `require.resolve("typescript/bin/tsc")` and runs it with
+  `process.execPath`, bypassing `npx`. On some Windows + npm 7+
+  combinations, `npx tsc` falsely reports "This is not the tsc command
+  you are looking for" because npm stopped auto-resolving the local-bin
+  shim reliably. The fix is platform-agnostic and never depends on PATH
+  or npx finding the local devDependency.
+
 ## [0.5.0] — 2026-04-29
 
 Rule-design refinement driven by the **phase-2 case study**

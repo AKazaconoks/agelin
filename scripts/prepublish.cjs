@@ -18,24 +18,25 @@
  * `npm publish`. To run it out-of-band before publishing, use:
  *
  *   npm run verify:publish
+ *
+ * Why direct paths instead of `npx`? On some Windows + npm combinations,
+ * `npx tsc` fails with "This is not the tsc command you are looking for"
+ * because npm 7+ stopped auto-resolving the local-bin shim reliably.
+ * Resolving the TypeScript entry via `require.resolve` and invoking it
+ * with `process.execPath` is platform-agnostic and never fails to find
+ * the local TypeScript that we already have as a devDependency.
  */
 
 "use strict";
 
 const { spawnSync } = require("node:child_process");
 
-const isWindows = process.platform === "win32";
-// On Windows, npm/npx/tsc live as .cmd shims; spawning them without a
-// shell needs the .cmd suffix or `shell: true`. Using shell: true is
-// simpler and equivalent for trusted command strings here.
-const SHELL = true;
-
 function run(cmd, args, extraEnv) {
   const env = { ...process.env, ...(extraEnv || {}) };
   console.log(`\n→ ${cmd} ${args.join(" ")}`);
   const out = spawnSync(cmd, args, {
     stdio: "inherit",
-    shell: SHELL,
+    shell: false,
     env,
   });
   if (out.status !== 0) {
@@ -44,10 +45,33 @@ function run(cmd, args, extraEnv) {
   }
 }
 
+function runShell(cmd, extraEnv) {
+  const env = { ...process.env, ...(extraEnv || {}) };
+  console.log(`\n→ ${cmd}`);
+  const out = spawnSync(cmd, [], {
+    stdio: "inherit",
+    shell: true,
+    env,
+  });
+  if (out.status !== 0) {
+    console.error(`\n✗ ${cmd} exited with code ${out.status}`);
+    process.exit(out.status ?? 1);
+  }
+}
+
 console.log("agelin prepublish: typecheck → tests → build");
 
-run("npx", ["tsc", "--noEmit"]);
-run("npx", ["bun", "test"], { SKIP_PUBLISH_TEST: "1" });
-run("npx", ["tsc"]);
+// Resolve TypeScript directly. The package ships its CLI entry as a
+// plain JS file; we run it with the current Node, which works on every
+// platform without depending on PATH or npx.
+const tscEntry = require.resolve("typescript/bin/tsc");
+
+run(process.execPath, [tscEntry, "--noEmit"]);
+
+// bun is not a Node package — let `npx --yes` resolve it. `--yes` skips
+// the prompt; npx will download and cache bun on first use.
+runShell("npx --yes bun test", { SKIP_PUBLISH_TEST: "1" });
+
+run(process.execPath, [tscEntry]);
 
 console.log("\n✓ prepublish ok");

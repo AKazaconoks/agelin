@@ -1,6 +1,6 @@
 {
   "name": "agelin",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Quality scorer & benchmark harness for Claude Code subagents (\".claude/agents/*.md\"). Like ESLint, but it tells you if the subagent actually works.",
   "type": "module",
   "main": "./dist/index.js",

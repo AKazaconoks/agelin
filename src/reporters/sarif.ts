@@ -35,7 +35,7 @@ const SARIF_SCHEMA =
 const TOOL_INFORMATION_URI = "https://github.com/AKazaconoks/agelin";
 const TOOL_NAME = "agelin";
 // Updated at release time. Keep in sync with package.json + src/index.ts.
-const TOOL_VERSION = "0.5.0";
+const TOOL_VERSION = "0.5.1";
 
 interface SarifResult {
   ruleId: string;
