@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.2] — 2026-04-29
+
+Documentation + tooling polish on top of 0.5.1. No behavior change to
+the linter itself.
+
+### Added
+- `agelin init --template=subagent-enhancer` and
+  `agelin init --template=answer-judge` — the two case-study companion
+  agents are now scaffoldable directly. Recommended workflow: lint with
+  `agelin check`, apply mechanical fixes with `agelin fix`, then route
+  judgment-based fixes through `@subagent-enhancer` (which automates
+  the lint+fix loop on any subagent file). The full template list is
+  now: `code-reviewer`, `test-runner`, `debug-helper`,
+  `subagent-enhancer`, `answer-judge`.
+
+### Changed
+- **README rewrite.** Finding-led intro (phase-2 case study numbers up
+  top), explicit Commands table covering all 12 CLI surfaces, a
+  Recommended-workflow section that wires `check` → `fix` →
+  `subagent-enhancer` → `bench`, and a plain-English "Authoring a
+  golden task" section explaining the assertion-tree schema (which
+  was previously folder lore for users to figure out from
+  `tasks/case-study/*.json`).
+- **Phase-1 case-study README** now opens with a banner pointing at the
+  canonical [phase-2 case study repo](https://github.com/AKazaconoks/agelin-case-study)
+  and includes a postscript explaining what phase 2 changed (domain-
+  matched questions; quality lift the phase-1 methodology couldn't see;
+  the 0.5.0 ruleset refinement that came out of phase-2's findings).
+
 ## [0.5.1] — 2026-04-29
 
 Build-tooling fix. **0.5.0's behavior is unchanged**; this release exists

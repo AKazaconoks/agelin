@@ -71,7 +71,7 @@ async function main() {
   }
 
   if (command === "--version" || command === "-v") {
-    console.log("0.5.1");
+    console.log("0.5.2");
     process.exit(0);
   }
 

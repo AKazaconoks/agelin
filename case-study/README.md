@@ -1,4 +1,10 @@
-# Case study: applying agelin's recommendations to popular Claude Code subagents
+# Phase 1 case study: applying agelin's recommendations to popular Claude Code subagents
+
+> **📊 Looking for the canonical case study?** [**`agelin-case-study`**](https://github.com/AKazaconoks/agelin-case-study) — phase 2, 20 wild subagents × 5 domain-matched questions each, **+14.92% combined lift** (judge total +4.14%, mean wall time −10.78%). The phase-2 study is what motivated the agelin 0.5.0 ruleset refinement. **Most readers should start there.**
+>
+> This page is the earlier **phase-1** study from agelin 0.4.1: 3 subagents × 20 generic StackOverflow questions, retained for cross-comparison and historical reference. The phase-1 finding ("agelin tightens, doesn't make smarter") was a **measurement artifact** — generic questions don't stress specialty agents. Phase-2 fixed the methodology and produced a proper quality-and-time lift.
+
+---
 
 > Does linting an agent actually make it answer real-world questions better? We took three popular Claude Code subagents from the wild, applied agelin's recommendations to each, and re-ran them against **20 high-vote questions pulled verbatim from StackOverflow**. The questions, the agent diffs, and every benchmark cell are in this directory.
 
@@ -237,3 +243,15 @@ It runs `agelin check`, applies `agelin fix` for the mechanical rules, applies t
 - **Three repeats per cell isn't enough to prove statistical significance.** It smooths LLM nondeterminism but doesn't establish a confidence interval. The directional signals (every agent's static score went up, timeouts dropped, mean strict pass rose) are robust; per-task swings of ±1 are within noise.
 - **Time budgets are tight.** Several tasks have 60 s budgets that the more verbose wild agents bust on principle. The case study's "timeout" signal is real but partly an artefact of where we set the budget.
 - **The before-agents were already at 96% semantic correctness.** This case study isn't a story about agelin teaching agents new tricks — it's a story about agelin shaping how concisely they answer.
+
+---
+
+## Postscript — what phase 2 changed
+
+The flat-judge result above (`96.06 → 95.97`, essentially zero) is honest *for the methodology phase 1 used*. It also turned out to be misleading: the judge couldn't see a difference because we picked **generic StackOverflow questions** (`let` vs `var`, POST vs PUT) and asked them of **specialty agents** (bash-expert, electron-pro, full-stack-developer). On generic questions, any frontier model + any subagent gives a textbook-correct answer at ~96/100. There was no quality gap to close.
+
+Phase 2 fixed the methodology by **picking 5 domain-matched questions per agent** (only React questions for `react-pro`, only Postgres questions for `postgres-pro`, etc.) and ran the bench across **20 agents**. Result: judge total moved from 82.98 → 86.41 (+4.14%), wall time dropped 10.78%, combined lift +14.92%. All 5 judge dimensions improved.
+
+Phase 2 also surfaced one real ruleset defect — agelin's `no-examples`, `undefined-output-shape`, and `missing-input-preconditions` rules were over-firing on already-concise agents and forcing structural inflation. **agelin 0.5.0** added a 1200-token floor to all three so they skip when the agent body is already terse. That fix is in the [v0.5.0 release notes](../CHANGELOG.md#050--2026-04-29) and the affected rules are documented in [`docs/rules.md`](../docs/rules.md).
+
+→ Phase 2 study with full per-agent breakdown: [**github.com/AKazaconoks/agelin-case-study**](https://github.com/AKazaconoks/agelin-case-study)

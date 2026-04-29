@@ -7,50 +7,106 @@
 
 Catch failure patterns before you copy a stranger's `.md` file into `.claude/agents/`. Score each subagent 0–100 on a deterministic, model-free rubric, then (optionally) run it against a golden task suite to see if it actually solves problems.
 
-## The problem
+---
 
-Wild Claude Code subagents are everywhere. VoltAgent, 0xfurai, lst97, iannuttall — three or four community repos alone hold 15k+ stars worth of agents that anyone can drop into `.claude/agents/`. **Quality is invisible.** Stars measure popularity, not whether the subagent runs the tests it just edited, or whether it spirals into infinite retry loops, or whether it has `Bash` + `Write` permissions when its description says "read-only auditor".
+## What we found
 
-There is no objective signal. `agelin` is the missing one: a 34-rule static analyzer plus a benchmark harness that scores every subagent on the same axis.
+We linted **20 popular community subagents**, applied agelin's recommendations to each, and re-ran them against **5 high-vote StackOverflow questions per agent — all in the agent's stated specialty**. 600 bench cells. Sonnet-4.6 graded every response on a 5-dimension rubric.
 
-## Quickstart
+| Metric | Before agelin | After agelin | Δ |
+|---|---|---|---|
+| Static score (mean of 20 agents) | 68.8 | **98.7** | +29.9 |
+| Mean response wall time | 57.0 s | **50.8 s** | **−10.78%** |
+| Bench timeouts | 91 | **67** | **−26%** |
+| Strict bench pass rate | 50.0% | **60.0%** | **+10 pp** |
+| **LLM-judge total** (Sonnet 4.6, 5 dims, 0–100) | **82.98** | **86.41** | **+4.14%** |
+| **Combined Δ% (judge + time)** | — | — | **+14.92%** |
+
+**16 of 20 agents improved.** All 5 judge dimensions moved up: correctness +4.1%, clarity +3.6%, completeness +4.1%, conciseness +6.5%, technical_accuracy +3.8%.
+
+The honest framing: **agelin is a tightening tool**. It works best when (a) the agent has fat to trim and (b) you ask it questions in its specialty lane. For already-concise specialists, the rules can over-add structure — but agelin 0.5.0 [closed that loophole](./CHANGELOG.md#050--2026-04-29) by adding token-aware skips to the three biggest culprits.
+
+**Reproduce, every diff, every grade:**
+- 📊 **Phase 2 (canonical)** — 20 agents × 5 domain-matched questions: **[github.com/AKazaconoks/agelin-case-study](https://github.com/AKazaconoks/agelin-case-study)**
+- 📁 Phase 1 (earlier study, generic questions) — 3 agents × 20 questions: [`case-study/`](./case-study/) in this repo
+
+---
+
+## Install
 
 ```bash
-# Static analysis — no API key, no money, runs in milliseconds.
+npm install -g agelin
+# or run ad-hoc with npx:
 npx agelin check ./.claude/agents/
-
-# Dynamic eval — runs each subagent against a golden task suite.
-npx agelin bench ./.claude/agents/
-
-# Sweep an entire directory of public subagents into a leaderboard.
-npx agelin baseline --targets=./targets
 ```
 
-Or **try the browser playground** — paste an agent, see its score and per-issue fix-its, no install required:
-[https://akazaconoks.github.io/agelin/playground.html](https://akazaconoks.github.io/agelin/playground.html). Runs the same 34 rules client-side; nothing leaves your browser.
+Requires Node ≥ 20. The static analyzer needs nothing else. The dynamic benchmark needs either an `ANTHROPIC_API_KEY` or the `claude` CLI on PATH (Pro / Max subscription).
 
-## Does it actually move the needle?
+## Recommended workflow
 
-We took **3 popular Claude Code subagents** from the wild, applied agelin's recommendations to each, and re-ran them against **20 high-vote questions pulled verbatim from StackOverflow** (3 agents × 20 tasks × 3 repeats = 180 calls per side, 360 total).
+For each subagent in `.claude/agents/`:
 
-Headline:
+```bash
+# 1. Lint statically — free, instant, catches ~95% of issues.
+agelin check .claude/agents/my-agent.md
 
-| | Before | After | Δ |
-|---|---|---|---|
-| Static score (mean of 3 agents) | 67.3 | **100** | +32.7 |
-| Bench timeouts (>60–90 s) | 43 | **27** | **−37%** |
-| Mean wall time per call | 51.7 s | 47.6 s | **−7.84%** |
-| LLM-judge total (Sonnet 4.6, 5 dims, 0–100) | 96.06 | 95.97 | ~tied |
-| Strict pass rate | 52.8% | 57.8% | +5% |
-| Loose-semantic pass rate | 96.1% | 96.7% | ~tied |
+# 2. Apply mechanical auto-fixes (4 rules have safe rewrites).
+agelin fix .claude/agents/my-agent.md
 
-The honest read: agelin's fixes don't make agents *smarter* on these questions (a Sonnet-4.6 grader scores both before and after at ~96/100, the rubric's "textbook-correct" anchor). They make agents **tighter** — `verbosity-encouraged` + `description-uses-cliche` + `undefined-output-shape` cut token waste enough that the agents stop busting time budgets and respond ~8% faster on average. Two of three case-study agents got materially faster (`bash-expert` 17.6%, `electron-pro` 13.1%); one regressed on speed (`full-stack-developer` −5.3%) — full per-agent breakdown in the case-study README.
+# 3. For judgment-based issues (description rewrites, missing examples,
+#    inputs/output sections, etc.), use the subagent-enhancer template:
+agelin init --template=subagent-enhancer
+# then in Claude Code:
+@subagent-enhancer .claude/agents/my-agent.md
+# It runs agelin check, applies fixes per each rule's advice, re-lints
+# until score ≥ 90 (or stops after 3 attempts).
 
-Full data, every diff, every assertion: **[`case-study/README.md`](./case-study/README.md)**. To automate the same workflow on any subagent of yours, see the [`subagent-enhancer`](./templates/subagent-enhancer.md) template.
+# 4. Optional — validate empirically with the dynamic benchmark.
+agelin bench .claude/agents/
+```
 
-## What you get
+**Don't use `bench` to fix agents — use it to prove they got better.** The static linter (`check`) is what catches issues. Bench is the empirical follow-up.
 
-**Frontmatter hygiene.** Rules that flag the subagents that simply will not load: missing `description`, name/filename mismatch, comma-separated `tools` strings instead of YAML arrays, references to retired Claude model IDs. In our scan of 97 popular public subagents, **14% failed basic frontmatter parsing** — the names show up as `(unnamed)` because the parser dies before reaching `name`.
+---
+
+## Commands
+
+All commands accept a path argument (file or directory). Default path is `./.claude/agents/`.
+
+| Command | What it does | When to use |
+|---|---|---|
+| `agelin check <path>` | Run all 34 static rules, score 0–100, print issues + fix advice. **Zero LLM, no key needed, runs in milliseconds.** | First thing on any agent. CI default. |
+| `agelin fix <path>` | Apply auto-fixes for the 4 mechanical rules; preview with `--dry-run`. | After `check` to clear the easy stuff. |
+| `agelin bench <path>` | Run each agent against a golden-task suite, report pass-rate + duration + cost. Backends: `--backend=api` or `--backend=claude-code`. | When you want empirical evidence of quality. |
+| `agelin baseline --targets=<dir>` | Sweep a directory of public subagents into a comparable leaderboard. | Comparing communities (lst97 vs VoltAgent vs your own). |
+| `agelin diff <baseline.json> <current.json>` | Compare two `--format=json` reports; print rule-firing deltas. | CI check that PRs don't regress. |
+| `agelin badge --score=<0-100>` | Emit an SVG status badge to stdout. | README integration. |
+| `agelin report` | Read previous `check` JSON output and re-render in a different format. | Convert JSON → markdown for PR comments. |
+| `agelin cache (clear\|stats)` | Manage the bench-result cache (skips re-running unchanged agents). | After deleting an agent, before a clean re-run. |
+| `agelin init` | Scaffold `agelin.config.json`. | First-time project setup. |
+| `agelin init --template=<name>` | Drop a starter subagent into `.claude/agents/`. | See [Starter templates](#starter-templates) below. |
+| `agelin --rules` | List every rule with its severity and description. Grep-friendly. | Discovering rule ids for config overrides. |
+| `agelin --version` / `-v` | Print version. | |
+
+Add `--format=json` to `check` / `bench` / `baseline` / `report` for machine-parseable output (also: `markdown`, `sarif`, `github-annotations`).
+
+### Starter templates
+
+`agelin init --template=<name>` drops a ready-to-use subagent into `.claude/agents/`. Six templates, all scoring ≥98/100 on agelin's rubric:
+
+| Template | What it is |
+|---|---|
+| `code-reviewer` | Drop-in code review agent. |
+| `test-runner` | Runs tests after code edits. |
+| `debug-helper` | Diagnoses errors with stack-trace + repro extraction. |
+| `subagent-enhancer` | **Runs the lint+fix loop on any other subagent.** Use this after `agelin check` to apply judgment-based fixes Claude can't auto-rewrite (description triggers, inputs sections, examples, output-shape). Caps at 3 iterations targeting score ≥ 90. |
+| `answer-judge` | Sonnet-4.6 grader on a 5-dim rubric (correctness / clarity / completeness / conciseness / technical-accuracy). Re-usable for benchmarking your own agents' answer quality — drives the case-study layer. |
+
+---
+
+## What the rules catch
+
+**Frontmatter hygiene.** Subagents that won't load: missing `description`, name/filename mismatch, comma-separated `tools` strings instead of YAML arrays, references to retired Claude model IDs. In our scan of 97 popular public subagents, **14% failed basic frontmatter parsing** — they show up as `(unnamed)` because the parser dies before reaching `name`.
 
 **Body structure.** Long-form prompts are where most quality is lost. We catch prompts that are too short to specify anything (under 50 tokens), too long to keep attention (over 2000), missing worked examples (64% of wild subagents), missing input preconditions (94%), missing output-shape contracts (60%), or written as tutorials that teach the user instead of instructing the agent.
 
@@ -60,45 +116,89 @@ Full data, every diff, every assertion: **[`case-study/README.md`](./case-study/
 
 Across the 97-agent baseline, the mean score landed at **65.9 / 100** — median 68, range 5 to 94. Plenty of room to move.
 
-## `check` is free; `bench` is the optional dynamic eval
+→ Full rule reference (all 34 with severities, fix-it messages, source links): [`docs/rules.md`](docs/rules.md). Or run `agelin --rules` for the inline grep-friendly listing.
 
-The 34-rule **static analyzer** (`agelin check`) needs zero LLM. No API key, no CLI subscription — it runs against the markdown directly. That's where ~95% of the value is and what every CI integration uses by default.
+---
 
-The optional **dynamic benchmark** (`agelin bench`) actually runs each subagent against a golden task suite. Two backends:
+## `bench` and golden tasks
 
-| Backend       | Compatible with                              | Requires                                          | Flag                    |
-| ------------- | -------------------------------------------- | ------------------------------------------------- | ----------------------- |
-| `api`         | Any Anthropic API account (Build / Scale / Enterprise / pay-as-you-go) | `ANTHROPIC_API_KEY` env var      | `--backend=api`         |
-| `claude-code` | Claude Pro **or** Claude Max subscription    | `claude` CLI on PATH (authenticated)              | `--backend=claude-code` |
+`check` is enough for most users. Skip this section unless you actually want to run the dynamic benchmark.
 
-The default `--backend=auto` prefers `claude-code` when the `claude` CLI is on PATH and `ANTHROPIC_API_KEY` is missing — anyone with a Pro or Max subscription can run the benchmarks at no per-token cost.
+### Backends
+
+| Backend | Compatible with | Requires | Flag |
+|---|---|---|---|
+| `api` | Any Anthropic API account | `ANTHROPIC_API_KEY` env var | `--backend=api` |
+| `claude-code` | Claude Pro **or** Claude Max subscription | `claude` CLI on PATH (authenticated) | `--backend=claude-code` |
+
+The default `--backend=auto` prefers `claude-code` when the CLI is on PATH and `ANTHROPIC_API_KEY` is missing — anyone with a Pro / Max subscription can run the benchmarks at no per-token cost.
 
 ```bash
 # Flat-rate (Pro or Max): routes through your local `claude` CLI
-npx agelin bench ./.claude/agents/ --backend=claude-code
+agelin bench ./.claude/agents/ --backend=claude-code
 
 # Pay-per-token (API): direct Messages API
 export ANTHROPIC_API_KEY=sk-ant-...
-npx agelin bench ./.claude/agents/ --backend=api --model=claude-sonnet-4-6
+agelin bench ./.claude/agents/ --backend=api --model=claude-sonnet-4-6
 ```
 
-**Non-Anthropic models** (OpenAI / Gemini / local Ollama) are **not supported today**. The `Backend` interface in `src/eval/backends/index.ts` is shaped for swap-in implementations, but each model family needs ~3-5 days of work to translate its tool-use loop, pricing table, and retry semantics. On the roadmap; not in 0.x.
+Non-Anthropic models (OpenAI / Gemini / local Ollama) are not supported today. The `Backend` interface in [`src/eval/backends/index.ts`](src/eval/backends/index.ts) is shaped for swap-in implementations; on the roadmap, not in 0.x.
 
-The `claude-code` backend has two trade-offs vs. the API backend: spawned tool calls execute with Claude Code's real permissions (not our tmpdir sandbox), and per-tool-call counts aren't exposed by `claude -p --output-format json` yet — so `tool-called` / `no-tool-called` assertions are unreliable there. See `src/eval/backends/claude-code.ts` for the full list.
+### Authoring a golden task (the bit users miss)
 
-## Rule reference
+A "golden task" is a single JSON file under `tasks/<category>/<task-id>.json` that the bench harness loads. Each task is one prompt + a deterministic assertion that says whether the agent's reply was right. Skeleton:
 
-All 34 rules with severities, descriptions, and example fix-it messages: [`docs/rules.md`](docs/rules.md). Auto-generated from `src/rules/*.ts` — regenerate with `npm run docs:rules`.
+```json
+{
+  "id": "review-finds-bug",
+  "category": "code-review",
+  "title": "Reviewer should spot the obvious null-deref",
+  "prompt": "Review this code for bugs:\n\n```js\nfunction get(o) { return o.x.y; }\nget(undefined);\n```",
+  "assertion": {
+    "kind": "all-of",
+    "assertions": [
+      {
+        "kind": "any-of",
+        "assertions": [
+          { "kind": "regex", "pattern": "null\\s*deref|cannot\\s+read|undefined", "flags": "i" },
+          { "kind": "regex", "pattern": "check\\s+(if\\s+)?(o|input)\\s+is", "flags": "i" }
+        ]
+      }
+    ]
+  },
+  "budget": { "maxDurationSec": 30, "maxToolCalls": 2 }
+}
+```
+
+**The shape, in plain English:**
+- `prompt` — what the bench harness sends to the agent.
+- `assertion` — a tree of regex checks. The top level is usually `all-of` (every clause must match). Each clause is `any-of` of `regex` leaves (any one phrasing of the right answer matches). Anchor the regexes to the *concept* being tested, not stylistic phrasing — agents don't always use the canonical wording. Use `flags: "i"` for case-insensitive.
+- `budget` — fail the task if the agent runs longer than `maxDurationSec` seconds or makes more than `maxToolCalls` tool calls.
+
+**Tell the bench which categories to load** in `agelin.config.json`:
+
+```json
+{
+  "benchCategories": ["code-review", "research"],
+  "benchRepeats": 3
+}
+```
+
+`benchRepeats: 3` smooths LLM nondeterminism. The harness runs each (agent × task) tuple that many times and reports pass-rate + variance.
+
+The case-study repo at [agelin-case-study](https://github.com/AKazaconoks/agelin-case-study) has 100 real-world tasks you can copy as a starting template — each one cites a verbatim StackOverflow URL and shows a fully-shaped assertion tree.
+
+---
 
 ## Sample output
 
-Multi-agent scan — compact summary:
+Multi-agent scan, compact summary:
 
 ```
-$ npx agelin check ./.claude/agents/
+$ agelin check ./.claude/agents/
 ⚠ build-validator           Score: 90  (undefined-output-shape, missing-input-preconditions)
-⚠ code-block-no-lang-positive  Score: 86  (no-negative-constraints, tool-body-mismatch, +3 more)
-✗ code-fixer                Score: 23  (no-exit-criteria, no-negative-constraints, +4 more)
+⚠ code-fixer                Score: 86  (no-negative-constraints, tool-body-mismatch, +3 more)
+✗ legacy-reviewer           Score: 23  (no-exit-criteria, no-negative-constraints, +4 more)
 ✗ security-auditor          Score: 29  (tool-overreach, vague-pronouns, +2 more)
 
 4 agents checked, 18 issues across 4 agents (2 critical)
@@ -107,10 +207,10 @@ $ npx agelin check ./.claude/agents/
   Run with --verbose to see the message and fix for each issue.
 ```
 
-Single-agent scan — auto-verbose layout (also via `--verbose`):
+Single-agent scan, auto-verbose layout (also via `--verbose`):
 
 ```
-$ npx agelin check ./.claude/agents/security-auditor.md
+$ agelin check ./.claude/agents/security-auditor.md
 ✗ security-auditor  Score: 29
 
   [error]     tool-overreach
@@ -126,37 +226,37 @@ $ npx agelin check ./.claude/agents/security-auditor.md
 
 Each agent is scored 0–100 by subtracting weighted penalties from a clean baseline (errors -25, warnings -8, suggestions -2). Full per-rule output is available with `--format=json` for piping into other tools.
 
-## Documentation
-
-- [`docs/principles.md`](docs/principles.md) — five principles distilled from 97 wild agents
-- [`docs/migration-guide.md`](docs/migration-guide.md) — fixing a low-scoring agent, ordered by score impact
-- [`docs/rules.md`](docs/rules.md) — all 34 rules with severities, fix-it messages, and source links (auto-generated)
-- [`docs/ci-recipes.md`](docs/ci-recipes.md) — copy-paste GitHub Actions / GitLab / pre-commit / CircleCI integrations
-- [`templates/`](templates/) — three drop-in starter agents that score 100/100 (or 98/100)
-
-## How it differs from `cclint`
-
-[`cclint`](https://github.com/carlrannaberg/cclint) validates that your subagent file is *valid* (frontmatter parses, naming conventions match). `agelin` checks if the subagent is *good* (catches failure patterns, runs it against benchmarks, produces a comparable score).
-
-The two are complementary — run cclint to make sure it's well-formed, run agelin to make sure it works.
+---
 
 ## Auto-fix
 
-Four rules have safe auto-fixes today:
+Four rules have safe auto-fixes today. For everything else (description rewrites, missing examples, etc.), use the [`subagent-enhancer`](#starter-templates) template.
 
 ```bash
-npx agelin fix ./.claude/agents/            # writes in place
-npx agelin fix ./.claude/agents/ --dry-run  # preview without writing
+agelin fix ./.claude/agents/            # writes in place
+agelin fix ./.claude/agents/ --dry-run  # preview without writing
 ```
 
-| Rule                          | Fix                                               |
-|-------------------------------|---------------------------------------------------|
-| `tools-as-string-not-array`   | rewrite comma-string → YAML array                 |
-| `code-block-no-language`      | insert `text` lang tag on bare ``` fences         |
-| `malformed-list`              | renumber 1..N preserving indent + marker          |
-| `hardcoded-paths`             | replace `/home/<u>/`, `/Users/<u>/`, `C:\Users\<u>\` with `~/` (placeholder names and code blocks left alone) |
+| Rule | Auto-fix |
+|---|---|
+| `tools-as-string-not-array` | Rewrite comma-string → YAML array |
+| `code-block-no-language` | Insert `text` lang tag on bare ``` fences |
+| `malformed-list` | Renumber 1..N preserving indent + marker |
+| `hardcoded-paths` | Replace `/home/<user>/`, `/Users/<user>/`, `C:\Users\<user>\` with `~/` (placeholder names and code blocks left alone) |
 
 A fix lands here only when there's exactly one reasonable answer. Rules that need a judgment call (e.g. `stale-model-versions` — `claude-3-opus` could map to either Sonnet 4.6 or Opus 4.7) print the suggestion in the message but don't auto-apply.
+
+---
+
+## Try it without installing
+
+The browser playground runs the full 34-rule analyzer client-side: paste an agent, see its score and per-issue fix-its, no install required.
+
+→ **[https://akazaconoks.github.io/agelin/playground.html](https://akazaconoks.github.io/agelin/playground.html)**
+
+Nothing leaves your browser; the rules are bundled into a static page.
+
+---
 
 ## Configuration
 
@@ -169,13 +269,15 @@ Drop an `agelin.config.json` in your repo root. Three composable layers:
   "rules": {
     "no-examples": "off",
     "my-org/no-internal-jargon": "error"
-  }
+  },
+  "benchCategories": ["code-review"],
+  "benchRepeats": 3
 }
 ```
 
 **Presets (`extends`).** `agelin:recommended` is the implicit default — every rule at its `defaultSeverity`. `agelin:strict` bumps each rule up one notch (suggestion → warning, warning → error). Multiple presets compose left-to-right.
 
-**Plugins (`plugins`).** Module specifiers — relative paths or bare-package names. Each plugin default-exports `{ name, rules }`; rule ids get auto-namespaced as `<plugin-name>/<rule-id>` so two plugins (or a plugin and a built-in) can never collide. Plugin rules participate fully in `extends` and `rules`.
+**Plugins (`plugins`).** Module specifiers — relative paths or bare-package names. Each plugin default-exports `{ name, rules }`; rule ids get auto-namespaced as `<plugin-name>/<rule-id>` so two plugins (or a plugin and a built-in) can never collide.
 
 ```js
 // internal-rules.js
@@ -209,12 +311,12 @@ This agent intentionally has no examples.
 <!-- agelin-enable -->
 ```
 
-Whole-agent rules (those that emit issues without a line number) are suppressed by any block disable that names them.
+---
 
 ## Programmatic API
 
 ```ts
-import { lint, ALL_RULES } from "agelin";
+import { lint, ALL_RULES, getRule } from "agelin";
 
 const report = await lint("./.claude/agents/");
 for (const agent of report.results) {
@@ -224,9 +326,26 @@ for (const agent of report.results) {
 
 Stable exports follow semver: `lint`, `parseSubagent`, `parseSubagentDir`, `ALL_RULES`, `getRule`, `computeAgentScore`, `getReporter`, plus all types from [`src/types.ts`](src/types.ts) and the markdown AST from [`src/parser/markdown.ts`](src/parser/markdown.ts). Subpath imports are also supported: `agelin/rules`, `agelin/parser`, `agelin/scoring`, `agelin/reporters`.
 
+---
+
+## Documentation
+
+- [`CHANGELOG.md`](CHANGELOG.md) — release notes (0.5.x is the current track)
+- [`docs/principles.md`](docs/principles.md) — five principles distilled from 97 wild agents
+- [`docs/migration-guide.md`](docs/migration-guide.md) — fixing a low-scoring agent, ordered by score impact
+- [`docs/rules.md`](docs/rules.md) — all 34 rules with severities, fix-it messages, and source links (auto-generated via `npm run docs:rules`)
+- [`docs/ci-recipes.md`](docs/ci-recipes.md) — copy-paste GitHub Actions / GitLab / pre-commit / CircleCI integrations
+- [`templates/`](templates/) — six drop-in subagents that score ≥98/100 (scaffold via `agelin init --template=<name>`)
+
+## How it differs from `cclint`
+
+[`cclint`](https://github.com/carlrannaberg/cclint) validates that your subagent file is *valid* (frontmatter parses, naming conventions match). `agelin` checks if the subagent is *good* (catches failure patterns, runs it against benchmarks, produces a comparable score).
+
+The two are complementary — run cclint to make sure it's well-formed, run agelin to make sure it works.
+
 ## Status
 
-0.2.0. The 34 static rules are calibrated against a 97-agent corpus; four of them have safe auto-fixes. The benchmark harness is functional but the golden task suite is still expanding. Public API (the named exports above) follows semver; the `bench` surface is not yet exported programmatically and may change.
+**0.5.x.** 34 static rules calibrated against a 97-agent corpus + 20-agent phase-2 case study. Four rules have safe auto-fixes. The benchmark harness is functional with two backends. Public API (the named exports above) follows semver; the `bench` programmatic surface is not yet exported and may change.
 
 ## Contributing
 

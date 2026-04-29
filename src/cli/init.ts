@@ -7,7 +7,14 @@
  *
  * With --template=<name>: copy a starter agent file into
  * `.claude/agents/<name>.md`. Available templates:
- *   code-reviewer, test-runner, debug-helper.
+ *   - code-reviewer, test-runner, debug-helper — example domain agents
+ *     that score 100/100 on agelin's rubric (drop-in starters).
+ *   - subagent-enhancer — runs `agelin check` on any other subagent,
+ *     applies mechanical + judgment-based fixes per each rule's `fix:`
+ *     advice, re-lints. Recommended workflow companion to `agelin check`.
+ *   - answer-judge — Sonnet-4.6 grader subagent used by the case study
+ *     to score responses on a 5-dimension rubric. Re-usable for any
+ *     project benchmarking subagent answer quality.
  */
 
 import { copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
@@ -17,7 +24,14 @@ import { DEFAULT_CONFIG } from "../types.js";
 
 const CONFIG_FILENAME = "agelin.config.json";
 
-const KNOWN_TEMPLATES = new Set(["code-reviewer", "test-runner", "debug-helper"]);
+const KNOWN_TEMPLATES = new Set([
+  "code-reviewer",
+  "test-runner",
+  "debug-helper",
+  // Recommended companions for the lint workflow (added in 0.5.x):
+  "subagent-enhancer", // runs the lint+fix loop on any subagent
+  "answer-judge",      // grades agent responses on a 5-dim rubric
+]);
 
 export interface InitOptions {
   template?: string;
